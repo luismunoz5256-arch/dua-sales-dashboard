@@ -1,0 +1,20 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand-50: #f0fdf4;
+  --color-brand-100: #dcfce7;
+  --color-brand-600: #16a34a;
+  --color-brand-700: #15803d;
+  --color-brand-800: #166534;
+}
+
+html, body, #root { height: 100%; }
+body {
+  @apply bg-slate-50 text-slate-900 antialiased;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: none;
+}
+/* Room for the bottom nav plus the phone's gesture bar. */
+.pb-nav { padding-bottom: calc(5rem + env(safe-area-inset-bottom)); }
+.safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+.safe-top { padding-top: env(safe-area-inset-top); }

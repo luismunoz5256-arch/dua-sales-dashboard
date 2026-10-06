@@ -1,4 +1,4 @@
-# Dua Route — Dua Food Sales Dashboard
+# Dua Sales — Dua Food Sales Dashboard
 
 A personal, mobile-first sales app (PWA) for daily visits, follow-ups, upsells and leads.
 

@@ -1,14 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" fill="#15803d"/>
-  <!-- map pin -->
-  <path d="M256 92c-70 0-124 54-124 122 0 92 124 206 124 206s124-114 124-206c0-68-54-122-124-122z" fill="#fff"/>
-  <!-- orange inside the pin -->
-  <circle cx="256" cy="212" r="62" fill="#f97316"/>
-  <circle cx="256" cy="212" r="50" fill="#fb923c"/>
-  <g stroke="#fed7aa" stroke-width="6" stroke-linecap="round">
-    <path d="M256 166v92M210 212h92M223 179l66 66M289 179l-66 66"/>
-  </g>
-  <!-- leaf -->
-  <path d="M262 150c18-30 52-40 74-34-6 28-36 50-74 34z" fill="#4ade80"/>
-  <text x="256" y="462" text-anchor="middle" font-family="Arial Black, Arial, sans-serif" font-weight="900" font-size="64" fill="#fff" letter-spacing="4">DUA</text>
+  <rect width="512" height="512" fill="#f97316"/>
+  <text x="250" y="366" text-anchor="middle" font-family="Arial Black, Arial, sans-serif" font-weight="900" font-size="300" fill="#fff">D</text>
+  <!-- stem + leaf sprouting from the top-right of the D -->
+  <path d="M318 142c4-18 12-32 24-42" stroke="#166534" stroke-width="12" stroke-linecap="round" fill="none"/>
+  <path d="M338 104c18-40 62-58 104-50-10 44-56 70-104 50z" fill="#15803d"/>
+  <path d="M342 100c26-14 52-26 84-38" stroke="#4ade80" stroke-width="5" stroke-linecap="round" fill="none"/>
+  <text x="256" y="440" text-anchor="middle" font-family="Arial, sans-serif" font-weight="700" font-size="44" fill="#fff" letter-spacing="10">SALES</text>
 </svg>

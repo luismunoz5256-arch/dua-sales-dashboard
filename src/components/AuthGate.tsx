@@ -39,8 +39,7 @@ function Login() {
   return (
     <div className="min-h-full flex flex-col justify-center px-6 safe-top">
       <img src="/icon.svg" alt="" className="w-24 h-24 mx-auto mb-4 rounded-3xl shadow-md" />
-      <h1 className="text-2xl font-bold text-center">Dua Route</h1>
-      <p className="text-slate-500 text-center mb-8">Dua Food sales</p>
+      <h1 className="text-2xl font-bold text-center mb-8">Dua Sales</h1>
       <form onSubmit={submit} className="space-y-4 max-w-sm w-full mx-auto">
         <input
           type="email" autoComplete="email" required placeholder="Email" value={email}

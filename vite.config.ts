@@ -11,8 +11,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['icon.svg', 'apple-touch-icon.png'],
       manifest: {
-        name: 'Dua Route — Dua Food Sales',
-        short_name: 'Dua Route',
+        name: 'Dua Sales — Dua Food',
+        short_name: 'Dua Sales',
         description: 'Daily visits, follow-ups, upsells and leads',
         theme_color: '#15803d',
         background_color: '#f8fafc',

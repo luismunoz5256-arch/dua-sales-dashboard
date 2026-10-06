@@ -24,12 +24,15 @@ const TITLES: Record<string, string> = {
 export function Layout() {
   const { ready, loadError, saveError, dismissSaveError, reload, mode } = useStore()
   const { pathname } = useLocation()
-  const title = TITLES[pathname] ?? 'Dua Sales'
+  const title = TITLES[pathname] ?? 'Dua Route'
 
   return (
     <div className="min-h-full">
       <header className="sticky top-0 z-20 bg-brand-700 text-white safe-top">
         <div className="h-14 flex items-center px-4 gap-2 max-w-2xl mx-auto">
+          <Link to="/" aria-label="Dua Route home" className="shrink-0">
+            <img src="/icon.svg" alt="" className="w-9 h-9 rounded-lg ring-1 ring-white/30" />
+          </Link>
           <h1 className="text-lg font-bold flex-1 truncate">{title}</h1>
           {mode === 'demo' && <span className="text-[11px] font-semibold bg-white/20 rounded-full px-2 py-0.5">DEMO</span>}
           <Link to="/goals" aria-label="Goals" className="w-11 h-11 grid place-items-center rounded-full active:bg-white/20">

@@ -1,6 +1,14 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="96" fill="#15803d"/>
-  <path d="M256 104c-88 40-136 112-136 192 0 64 52 112 136 112s136-48 136-112c0-80-48-152-136-192z" fill="#bbf7d0"/>
-  <path d="M256 152v240" stroke="#15803d" stroke-width="20" stroke-linecap="round"/>
-  <path d="M256 250l-60-44M256 310l60-44" stroke="#15803d" stroke-width="16" stroke-linecap="round"/>
+  <rect width="512" height="512" fill="#15803d"/>
+  <!-- map pin -->
+  <path d="M256 92c-70 0-124 54-124 122 0 92 124 206 124 206s124-114 124-206c0-68-54-122-124-122z" fill="#fff"/>
+  <!-- orange inside the pin -->
+  <circle cx="256" cy="212" r="62" fill="#f97316"/>
+  <circle cx="256" cy="212" r="50" fill="#fb923c"/>
+  <g stroke="#fed7aa" stroke-width="6" stroke-linecap="round">
+    <path d="M256 166v92M210 212h92M223 179l66 66M289 179l-66 66"/>
+  </g>
+  <!-- leaf -->
+  <path d="M262 150c18-30 52-40 74-34-6 28-36 50-74 34z" fill="#4ade80"/>
+  <text x="256" y="462" text-anchor="middle" font-family="Arial Black, Arial, sans-serif" font-weight="900" font-size="64" fill="#fff" letter-spacing="4">DUA</text>
 </svg>

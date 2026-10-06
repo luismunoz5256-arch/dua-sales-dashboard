@@ -1,7 +1,9 @@
-import { Minus, Plus } from 'lucide-react'
+import { Download, FileUp, Minus, Plus } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { useState, type ReactNode } from 'react'
 import { Button, Card, SectionTitle } from '../components/ui'
 import { supabase } from '../lib/backend'
+import { exportData } from '../lib/exporters'
 import { useStore } from '../lib/store'
 
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
@@ -103,6 +105,31 @@ export default function SettingsPage() {
         )}
       </Card>
 
+      <SectionTitle>Your data</SectionTitle>
+      <Card className="divide-y divide-slate-100">
+        <Link to="/clients/import" className="flex items-center gap-3 px-4 h-14 font-semibold active:bg-slate-50">
+          <FileUp size={20} className="text-brand-700" /> Bulk add clients (paste or CSV)
+        </Link>
+        {(
+          [
+            ['clients', 'Export clients (CSV)'],
+            ['interactions', 'Export interaction log (CSV)'],
+            ['orders', 'Export orders (CSV)'],
+            ['followups', 'Export follow-ups (CSV)'],
+            ['backup', 'Full backup (JSON)'],
+          ] as const
+        ).map(([kind, label]) => (
+          <button
+            key={kind}
+            onClick={() => exportData(kind, data, settings)}
+            className="w-full flex items-center gap-3 px-4 h-14 font-semibold text-left active:bg-slate-50"
+          >
+            <Download size={20} className="text-brand-700" /> {label}
+          </button>
+        ))}
+      </Card>
+      <p className="text-xs text-slate-500 mt-2 px-1">The clients export uses the same columns as the import, so you can edit it in a spreadsheet and re-import.</p>
+
       {supabase && (
         <>
           <SectionTitle>Account</SectionTitle>
@@ -111,7 +138,7 @@ export default function SettingsPage() {
       )}
 
       <p className="text-xs text-slate-400 text-center mt-8">
-        Priority weights, CSV import/export and notifications arrive in later steps.
+        Priority weights and notifications arrive in later steps.
       </p>
     </div>
   )

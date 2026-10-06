@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { backend, emptyData, TABLES, withDefaults } from './backend'
 import { buildSampleData } from './seed'
 import type { DataSet, RowOf, Settings, TableName } from './types'
@@ -6,6 +6,8 @@ import type { DataSet, RowOf, Settings, TableName } from './types'
 /**
  * The whole data set is small (a few hundred rows), so it is loaded once into memory.
  * Screens read from memory instantly; writes update memory first, then save in the background.
+ * Background saves run one at a time, in order, so a row is always saved before rows that refer to it.
+ * Callers don't need to await writes; awaiting just waits until that write has been saved.
  */
 interface Store {
   ready: boolean
@@ -83,48 +85,46 @@ export function DataProvider({ children }: { children: ReactNode }) {
     setSaveError(`Couldn't save: ${e instanceof Error ? e.message : String(e)}`)
   }, [])
 
+  const queue = useRef<Promise<void>>(Promise.resolve())
+  const enqueue = useCallback(
+    (job: () => Promise<void>) => {
+      const p = queue.current.then(job).catch(failed)
+      queue.current = p
+      return p
+    },
+    [failed],
+  )
+
   const upsert = useCallback(
     async <T extends TableName>(table: T, rowOrRows: RowOf<T> | RowOf<T>[]) => {
       const rows = Array.isArray(rowOrRows) ? rowOrRows : [rowOrRows]
       setData((d) => applyUpsert(d, table, rows))
-      try {
-        await backend.upsert(table, rows)
-      } catch (e) {
-        failed(e)
-      }
+      return enqueue(() => backend.upsert(table, rows))
     },
-    [failed],
+    [enqueue],
   )
 
   const remove = useCallback(
     async (table: TableName, idOrIds: string | string[]) => {
       const ids = Array.isArray(idOrIds) ? idOrIds : [idOrIds]
       setData((d) => applyRemove(d, table, ids))
-      try {
-        await backend.remove(table, ids)
-      } catch (e) {
-        failed(e)
-      }
+      return enqueue(() => backend.remove(table, ids))
     },
-    [failed],
+    [enqueue],
   )
 
   const saveSettings = useCallback(
     async (s: Settings) => {
       setSettings(s)
-      try {
-        await backend.saveSettings(s)
-      } catch (e) {
-        failed(e)
-      }
+      return enqueue(() => backend.saveSettings(s))
     },
-    [failed],
+    [enqueue],
   )
 
   const loadSampleData = useCallback(async () => {
     const sample = buildSampleData()
-    // Parents before children so foreign keys are satisfied.
-    for (const t of TABLES) await upsert(t, sample[t] as never)
+    // Parents before children so foreign keys are satisfied (the save queue keeps this order).
+    for (const t of TABLES) upsert(t, sample[t] as never)
   }, [upsert])
 
   const clearSampleData = useCallback(async () => {

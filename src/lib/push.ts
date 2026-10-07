@@ -1,6 +1,14 @@
 import { supabase } from './backend'
 
-const PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY as string | undefined
+let keyRequest: Promise<string | null> | null = null
+/** The server hands out the push public key (it's safe to share), so no build-time setting is needed. */
+function publicKey(): Promise<string | null> {
+  keyRequest ??= fetch('/api/notify?publicKey=1')
+    .then((r) => r.json())
+    .then((j) => j.publicKey ?? null)
+    .catch(() => null)
+  return keyRequest
+}
 
 export type PushState = 'unsupported' | 'not_configured' | 'denied' | 'off' | 'on'
 
@@ -10,7 +18,7 @@ export function pushSupported() {
 
 export async function pushState(): Promise<PushState> {
   if (!pushSupported()) return 'unsupported'
-  if (!PUBLIC_KEY || !supabase) return 'not_configured'
+  if (!supabase || !(await publicKey())) return 'not_configured'
   if (Notification.permission === 'denied') return 'denied'
   const reg = await navigator.serviceWorker.getRegistration()
   const sub = await reg?.pushManager.getSubscription()
@@ -26,11 +34,12 @@ function keyBytes(base64: string) {
 /** Ask permission, subscribe this phone, and save the subscription so the server can reach it. */
 export async function enablePush(): Promise<PushState> {
   if (!pushSupported()) return 'unsupported'
-  if (!PUBLIC_KEY || !supabase) return 'not_configured'
+  const key = await publicKey()
+  if (!key || !supabase) return 'not_configured'
   const perm = await Notification.requestPermission()
   if (perm !== 'granted') return 'denied'
   const reg = await navigator.serviceWorker.ready
-  const sub = (await reg.pushManager.getSubscription()) ?? (await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: keyBytes(PUBLIC_KEY) }))
+  const sub = (await reg.pushManager.getSubscription()) ?? (await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: keyBytes(key) }))
   const json = sub.toJSON()
   const { error } = await supabase.from('push_subscriptions').upsert({ endpoint: json.endpoint, keys: json.keys }, { onConflict: 'endpoint' })
   if (error) throw error

@@ -50,7 +50,7 @@ Social links are tap-to-open searches; nothing is scraped.
 A morning summary (around 7am El Paso time: today's visits by area, follow-ups due, clients who haven't ordered) and a midday reminder (around noon, only if follow-ups are still open). Sent by Vercel Cron (free on Hobby: two daily jobs, each fires sometime within its hour).
 
 1. In **Vercel → Settings → Environment Variables**, add (Production):
-   - `VITE_VAPID_PUBLIC_KEY` and `VAPID_PRIVATE_KEY`: a push key pair (generate with `npx web-push generate-vapid-keys`)
+   - `VAPID_PUBLIC_KEY` and `VAPID_PRIVATE_KEY`: a push key pair (generate with `npx web-push generate-vapid-keys`)
    - `CRON_SECRET`: any long random string (Vercel sends it with each cron call)
    - `SUPABASE_SERVICE_ROLE_KEY`: Supabase → Project Settings → API Keys → **secret / service_role**. Server only; never put it in the app.
 2. **Redeploy.**

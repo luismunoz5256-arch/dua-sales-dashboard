@@ -5,7 +5,7 @@
  * - POST {test: true} from the signed-in app sends a test notification.
  *
  * Env vars (Vercel > Settings > Environment Variables):
- *   VITE_VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY   push keys (pair)
+ *   VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY        push keys (pair); the public one is served to the app
  *   SUPABASE_SERVICE_ROLE_KEY                   lets the scheduled job read your data (server only, never in the app)
  *   CRON_SECRET                                 any long random string
  *   VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY   already set
@@ -25,11 +25,13 @@ export default async function handler(req: any, res: any) {
   const url = process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL
   const anon = process.env.SUPABASE_ANON_KEY ?? process.env.VITE_SUPABASE_ANON_KEY
   const service = process.env.SUPABASE_SERVICE_ROLE_KEY
-  const pub = process.env.VITE_VAPID_PUBLIC_KEY
+  const pub = process.env.VAPID_PUBLIC_KEY ?? process.env.VITE_VAPID_PUBLIC_KEY
   const priv = process.env.VAPID_PRIVATE_KEY
-  const missing = Object.entries({ VITE_SUPABASE_URL: url, SUPABASE_SERVICE_ROLE_KEY: service, VITE_VAPID_PUBLIC_KEY: pub, VAPID_PRIVATE_KEY: priv, CRON_SECRET: process.env.CRON_SECRET })
+  const missing = Object.entries({ VITE_SUPABASE_URL: url, SUPABASE_SERVICE_ROLE_KEY: service, VAPID_PUBLIC_KEY: pub, VAPID_PRIVATE_KEY: priv, CRON_SECRET: process.env.CRON_SECRET })
     .filter(([, v]) => !v)
     .map(([k]) => k)
+  // The public key is meant to be public: the app asks for it when turning notifications on.
+  if (req.method === 'GET' && req.query?.publicKey) return res.status(missing.length ? 501 : 200).json({ publicKey: missing.length ? null : pub, missing })
   if (missing.length) return res.status(501).json({ error: 'not_configured', missing })
 
   const auth = String(req.headers.authorization ?? '')

@@ -5,6 +5,7 @@ import { Button, Card, SectionTitle } from '../components/ui'
 import { supabase } from '../lib/backend'
 import { exportData } from '../lib/exporters'
 import { placesStatus } from '../lib/placesApi'
+import { disablePush, enablePush, pushState, sendTestPush, type PushState } from '../lib/push'
 import { DEFAULT_FIT_WEIGHTS, FIT_LABEL, type FitWeights } from '../lib/prospects'
 import { DEFAULT_SETTINGS } from '../lib/constants'
 import { RULE_LABEL, type RuleKey } from '../lib/priority'
@@ -93,6 +94,8 @@ export default function SettingsPage() {
 
       <RankingSettings settings={settings} save={saveSettings} />
 
+      <AppSettings settings={settings} save={saveSettings} />
+
       <FinderSettings settings={settings} save={saveSettings} />
 
       <SectionTitle>Areas</SectionTitle>
@@ -156,7 +159,7 @@ export default function SettingsPage() {
       )}
 
       <p className="text-xs text-slate-400 text-center mt-8">
-        Notifications arrive in a later step.
+        Dua Sales · your data stays in your own Supabase database.
       </p>
     </div>
   )
@@ -290,5 +293,138 @@ function FinderSettings({ settings, save }: { settings: Settings; save: (s: Sett
         Reset fit weights
       </button>
     </>
+  )
+}
+
+interface InstallPromptEvent extends Event {
+  prompt: () => Promise<void>
+  userChoice: Promise<{ outcome: string }>
+}
+
+/** Notifications, pitch language and installing the app. */
+function AppSettings({ settings, save }: { settings: Settings; save: (s: Settings) => void }) {
+  const [push, setPush] = useState<PushState | null>(null)
+  const [busy, setBusy] = useState(false)
+  const [msg, setMsg] = useState<string | null>(null)
+  const installed = window.matchMedia('(display-mode: standalone)').matches
+  const [installEvt, setInstallEvt] = useState<InstallPromptEvent | null>(
+    () => (window as unknown as { duaInstallPrompt?: InstallPromptEvent }).duaInstallPrompt ?? null,
+  )
+  useEffect(() => {
+    pushState().then(setPush)
+  }, [])
+  const prefs = { morning: true, midday: true, ...settings.notifications }
+  const setPref = (k: 'morning' | 'midday', v: boolean) => save({ ...settings, notifications: { ...prefs, [k]: v } })
+
+  async function toggle() {
+    setBusy(true)
+    setMsg(null)
+    try {
+      setPush(push === 'on' ? await disablePush() : await enablePush())
+    } catch (e) {
+      setMsg(e instanceof Error ? e.message : String(e))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <>
+      <SectionTitle>Notifications</SectionTitle>
+      <Card className="p-4 space-y-3">
+        {push === 'unsupported' && <p className="text-sm">This browser can't show notifications. Use Chrome on Android, ideally with the app installed.</p>}
+        {push === 'not_configured' && (
+          <p className="text-sm">Notifications aren't set up on the server yet (push keys missing). See "Notifications" in the README.</p>
+        )}
+        {push === 'denied' && (
+          <p className="text-sm">
+            Notifications are blocked for this site. In Chrome: tap the lock icon by the address (or long-press the app icon → App info) → Notifications → Allow.
+          </p>
+        )}
+        {(push === 'on' || push === 'off') && (
+          <>
+            <div className="flex items-center gap-3">
+              <div className="flex-1">
+                <p className="font-semibold">{push === 'on' ? '✓ On for this phone' : 'Off on this phone'}</p>
+                <p className="text-xs text-slate-500">Morning summary around 7am · midday reminder around noon if follow-ups are still open.</p>
+              </div>
+              <Button variant={push === 'on' ? 'secondary' : 'primary'} disabled={busy} onClick={toggle}>
+                {push === 'on' ? 'Turn off' : 'Turn on'}
+              </Button>
+            </div>
+            {push === 'on' && (
+              <>
+                <Toggle label="Morning summary (visits, follow-ups, no-order)" on={prefs.morning} onChange={(v) => setPref('morning', v)} />
+                <Toggle label="Midday reminder (only if follow-ups are still due)" on={prefs.midday} onChange={(v) => setPref('midday', v)} />
+                <Button
+                  variant="secondary"
+                  className="w-full"
+                  disabled={busy}
+                  onClick={async () => {
+                    setBusy(true)
+                    setMsg(await sendTestPush())
+                    setBusy(false)
+                  }}
+                >
+                  Send a test notification
+                </Button>
+              </>
+            )}
+          </>
+        )}
+        {msg && <p className="text-sm text-slate-700">{msg}</p>}
+      </Card>
+
+      <SectionTitle>Pitch language</SectionTitle>
+      <div className="grid grid-cols-3 gap-1 bg-slate-200 rounded-xl p-1">
+        {(
+          [
+            ['en', 'English'],
+            ['es', 'Español'],
+            ['both', 'Both'],
+          ] as const
+        ).map(([k, label]) => (
+          <button
+            key={k}
+            onClick={() => save({ ...settings, pitch_language: k })}
+            className={`h-11 rounded-lg text-sm font-semibold ${settings.pitch_language === k ? 'bg-white shadow-sm' : 'text-slate-600'}`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+      <p className="text-xs text-slate-500 mt-2 px-1">Used for upsell pitches on TODAY and opening lines in the Prospect Finder.</p>
+
+      <SectionTitle>App</SectionTitle>
+      <Card className="p-4">
+        {installed ? (
+          <p className="text-sm">✓ Installed on this phone. Long-press the icon for shortcuts: Today, Follow-ups, Find, Leads.</p>
+        ) : installEvt ? (
+          <Button
+            className="w-full"
+            onClick={async () => {
+              await installEvt.prompt()
+              await installEvt.userChoice
+              setInstallEvt(null)
+            }}
+          >
+            Install Dua Sales on this phone
+          </Button>
+        ) : (
+          <p className="text-sm">To install: open the Chrome menu ⋮ → <b>Add to Home screen</b> (or <b>Install app</b>).</p>
+        )}
+      </Card>
+    </>
+  )
+}
+
+function Toggle({ label, on, onChange }: { label: string; on: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <button onClick={() => onChange(!on)} className="w-full flex items-center gap-3 text-left min-h-11">
+      <span className="flex-1 text-sm">{label}</span>
+      <span className={`w-12 h-7 rounded-full p-1 transition-colors ${on ? 'bg-brand-600' : 'bg-slate-300'}`}>
+        <span className={`block w-5 h-5 rounded-full bg-white shadow transition-transform ${on ? 'translate-x-5' : ''}`} />
+      </span>
+    </button>
   )
 }

@@ -14,6 +14,7 @@ import {
   areaCenter, BUSINESS_TYPES, computeFit, DEFAULT_CHAINS, DEFAULT_FIT_WEIGHTS, findExisting, normName, PRICE_LABEL, prospectPitch,
   socialSearchLinks, type Category, type Fit, type Place,
 } from '../lib/prospects'
+import { pitchText } from '../lib/pitch'
 import { miles } from '../lib/route'
 import { useStore } from '../lib/store'
 import type { Client, Prospect } from '../lib/types'
@@ -437,7 +438,9 @@ function ResultCard({
   onDismiss: () => void
 }) {
   const [why, setWhy] = useState(false)
+  const { settings } = useStore()
   const pitch = prospectPitch(fit.category, place)
+  const opener = pitchText(pitch, settings.pitch_language)
   const social = socialSearchLinks(place)
   const tone = fit.score >= 7 ? 'bg-brand-700' : fit.score >= 4 ? 'bg-orange-500' : 'bg-slate-400'
   useEffect(() => {
@@ -492,7 +495,7 @@ function ResultCard({
 
       <div className="mt-2 rounded-lg bg-orange-50 p-2.5 text-sm">
         <p className="font-semibold text-orange-800">Lead with: {pitch.lines.map((l) => PRODUCT_LABEL[l]).join(' + ')}</p>
-        <p className="text-slate-700 italic mt-0.5">“{pitch.text}”</p>
+        <p className="text-slate-700 italic mt-0.5 whitespace-pre-line">“{opener}”</p>
       </div>
 
       <div className="flex flex-wrap gap-1.5 mt-2">

@@ -1,5 +1,5 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
-import { DEFAULT_SETTINGS } from './constants'
+import { withDefaults } from './settings'
 import type { DataSet, RowOf, Settings, TableName } from './types'
 
 export const TABLES: TableName[] = ['clients', 'interactions', 'followups', 'orders', 'week_plan', 'day_status', 'prospects']
@@ -8,19 +8,7 @@ export function emptyData(): DataSet {
   return { clients: [], interactions: [], followups: [], orders: [], week_plan: [], day_status: [], prospects: [] }
 }
 
-/** Merge saved settings over defaults so newly added settings always have a value. */
-export function withDefaults(saved: Partial<Settings> | null | undefined): Settings {
-  const s = saved ?? {}
-  return {
-    ...DEFAULT_SETTINGS,
-    ...s,
-    priority: {
-      ...DEFAULT_SETTINGS.priority,
-      ...s.priority,
-      weights: { ...DEFAULT_SETTINGS.priority.weights, ...s.priority?.weights },
-    },
-  }
-}
+export { withDefaults } from './settings'
 
 export interface Backend {
   kind: 'demo' | 'supabase'

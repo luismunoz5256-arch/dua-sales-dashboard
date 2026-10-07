@@ -130,6 +130,8 @@ export interface Settings {
   /** Prospect Finder: fit score weights (multipliers, default 1) and extra chain names to flag. */
   fit_weights?: Partial<Record<'type' | 'independent' | 'busy' | 'near' | 'menu' | 'fresh' | 'open', number>>
   extra_chains?: string[]
+  /** Push notifications (default on once enabled on a phone). */
+  notifications?: { morning: boolean; midday: boolean }
 }
 
 export interface DataSet {

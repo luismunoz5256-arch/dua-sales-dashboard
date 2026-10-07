@@ -1,0 +1,81 @@
+/**
+ * Push notifications.
+ * - Vercel Cron calls GET /api/notify?slot=morning (about 7:30am El Paso) and ?slot=midday (about noon).
+ *   Cron requests carry "Authorization: Bearer CRON_SECRET".
+ * - POST {test: true} from the signed-in app sends a test notification.
+ *
+ * Env vars (Vercel > Settings > Environment Variables):
+ *   VITE_VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY   push keys (pair)
+ *   SUPABASE_SERVICE_ROLE_KEY                   lets the scheduled job read your data (server only, never in the app)
+ *   CRON_SECRET                                 any long random string
+ *   VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY   already set
+ */
+process.env.TZ = 'America/Denver' // El Paso time, so "today" is right
+
+import { createClient } from '@supabase/supabase-js'
+import webpush from 'web-push'
+import { withDefaults } from '../src/lib/settings'
+import { today } from '../src/lib/dates'
+import { middayMessage, morningMessage, type PushMessage } from '../src/lib/notifyText'
+import type { DataSet, Settings } from '../src/lib/types'
+
+const TABLES = ['clients', 'interactions', 'followups', 'week_plan', 'day_status'] as const
+
+export default async function handler(req: any, res: any) {
+  const url = process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL
+  const anon = process.env.SUPABASE_ANON_KEY ?? process.env.VITE_SUPABASE_ANON_KEY
+  const service = process.env.SUPABASE_SERVICE_ROLE_KEY
+  const pub = process.env.VITE_VAPID_PUBLIC_KEY
+  const priv = process.env.VAPID_PRIVATE_KEY
+  const missing = Object.entries({ VITE_SUPABASE_URL: url, SUPABASE_SERVICE_ROLE_KEY: service, VITE_VAPID_PUBLIC_KEY: pub, VAPID_PRIVATE_KEY: priv, CRON_SECRET: process.env.CRON_SECRET })
+    .filter(([, v]) => !v)
+    .map(([k]) => k)
+  if (missing.length) return res.status(501).json({ error: 'not_configured', missing })
+
+  const auth = String(req.headers.authorization ?? '')
+  const isCron = auth === `Bearer ${process.env.CRON_SECRET}`
+  let isUser = false
+  if (!isCron && anon) {
+    const who = await fetch(`${url}/auth/v1/user`, { headers: { apikey: anon, Authorization: auth } })
+    isUser = who.ok
+  }
+  if (!isCron && !isUser) return res.status(401).json({ error: 'unauthorized' })
+
+  const db = createClient(url!, service!, { auth: { persistSession: false } })
+  webpush.setVapidDetails('mailto:noreply@dua-sales.app', pub!, priv!)
+
+  const body = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : req.body ?? {}
+  const slot = String(req.query?.slot ?? body.slot ?? '')
+  let message: PushMessage | null
+
+  if (isUser && body.test) {
+    message = { title: 'Dua Sales', body: 'Notifications are working. 🎉', url: '/', tag: 'test' }
+  } else {
+    const { data: s } = await db.from('settings').select('data').eq('id', 'main').maybeSingle()
+    const settings: Settings = withDefaults(s?.data)
+    const prefs = { morning: true, midday: true, ...settings.notifications }
+    if ((slot === 'morning' && !prefs.morning) || (slot === 'midday' && !prefs.midday)) return res.status(200).json({ sent: 0, reason: 'turned off' })
+    const data = { clients: [], interactions: [], followups: [], orders: [], week_plan: [], day_status: [], prospects: [] } as DataSet
+    for (const t of TABLES) {
+      const { data: rows, error } = await db.from(t).select('*').limit(5000)
+      if (error) return res.status(500).json({ error: error.message })
+      ;(data[t] as unknown[]) = rows ?? []
+    }
+    const t = today()
+    message = slot === 'morning' ? morningMessage(data, settings, t) : slot === 'midday' ? middayMessage(data, t) : null
+    if (!message) return res.status(200).json({ sent: 0, reason: 'nothing to say' })
+  }
+
+  const { data: subs } = await db.from('push_subscriptions').select('id, endpoint, keys')
+  let sent = 0
+  for (const sub of subs ?? []) {
+    try {
+      await webpush.sendNotification({ endpoint: sub.endpoint, keys: sub.keys }, JSON.stringify(message), { TTL: 4 * 3600 })
+      sent++
+    } catch (e: any) {
+      // Phone unsubscribed or app removed: forget this subscription.
+      if (e?.statusCode === 404 || e?.statusCode === 410) await db.from('push_subscriptions').delete().eq('id', sub.id)
+    }
+  }
+  return res.status(200).json({ sent, message })
+}

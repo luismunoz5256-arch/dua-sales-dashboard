@@ -1,3 +1,7 @@
 {
-  "rewrites": [{ "source": "/((?!api/|assets/|.*\\..*).*)", "destination": "/index.html" }]
+  "rewrites": [{ "source": "/((?!api/|assets/|.*\\..*).*)", "destination": "/index.html" }],
+  "crons": [
+    { "path": "/api/notify?slot=morning", "schedule": "0 13 * * *" },
+    { "path": "/api/notify?slot=midday", "schedule": "0 18 * * *" }
+  ]
 }

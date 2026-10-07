@@ -46,6 +46,18 @@ About 200 searches a month comes to $0. The app also caches every search for 30 
 The key lives only on the server (`api/places.ts`). The phone never sees it, and only your signed-in account can use it.
 Social links are tap-to-open searches; nothing is scraped.
 
+### 5. Notifications (optional, ~5 minutes)
+A morning summary (around 7am El Paso time: today's visits by area, follow-ups due, clients who haven't ordered) and a midday reminder (around noon, only if follow-ups are still open). Sent by Vercel Cron (free on Hobby: two daily jobs, each fires sometime within its hour).
+
+1. In **Vercel → Settings → Environment Variables**, add (Production):
+   - `VITE_VAPID_PUBLIC_KEY` and `VAPID_PRIVATE_KEY`: a push key pair (generate with `npx web-push generate-vapid-keys`)
+   - `CRON_SECRET`: any long random string (Vercel sends it with each cron call)
+   - `SUPABASE_SERVICE_ROLE_KEY`: Supabase → Project Settings → API Keys → **secret / service_role**. Server only; never put it in the app.
+2. **Redeploy.**
+3. On your phone: **Settings → Notifications → Turn on**, allow notifications, then **Send a test notification**.
+
+Times are set in `vercel.json` (UTC): morning `0 13 * * *`, midday `0 18 * * *`.
+
 ## Development
 ```bash
 npm install
@@ -64,6 +76,6 @@ Copy `.env.example` to `.env.local` and fill in the Supabase keys to develop aga
 4. ✅ Week plan — suggested plan, warehouse days, tap to move / add / remove
 5. ✅ Leads pipeline + Goals
 6. ✅ Prospect Finder (Google Places, cached)
-7. Polish — weights in settings, notifications, install
+7. ✅ Polish — notifications, Spanish pitches, install & shortcuts
 
 **Game:** points for visits (10), calls (5), texts (3), sample drops (15), quotes (20), follow-ups done (5) and secured clients (100 / 200 / 350 by size: typical order × frequency). Points are computed from logged data (each action type once per client per day), so Undo removes them. Levels: Seedling → Sprout → Grower → Picker → Market Runner → Route Pro → … → Route Legend. See `src/lib/score.ts`.

@@ -9,7 +9,7 @@ import { Button, Card, Pill, SectionTitle } from '../components/ui'
 import { isNoOrderFlag } from '../lib/actions'
 import { CONTACT_LABEL, INTERACTION_LABEL, LEAD_STAGE_LABEL, PRODUCT_LABEL, STATUS_LABEL, STATUS_STYLE } from '../lib/constants'
 import { daysBetween, relativeDay, today } from '../lib/dates'
-import { suggestUpsell, upsellPitch } from '../lib/pitch'
+import { pitchText, suggestUpsell, upsellPitch } from '../lib/pitch'
 import { planDays, weekDates } from '../lib/plan'
 import { dayKind, lastContactMap, type Ranked } from '../lib/priority'
 import { directionsUrl, planRoute } from '../lib/route'
@@ -322,7 +322,8 @@ function VisitCard({ r, done, showArea }: { r: Ranked; done?: string; showArea?:
 function UpsellCard({ c, onRoute }: { c: Client; onRoute: boolean }) {
   const toast = useToast()
   const line = suggestUpsell(c)!
-  const pitch = upsellPitch(c, line)
+  const { settings } = useStore()
+  const pitch = pitchText(upsellPitch(c, line), settings.pitch_language)
   return (
     <Card className="p-3">
       <ClientHeader c={c} right={onRoute && <Pill className="bg-brand-100 text-brand-800 self-center">On route</Pill>} />
@@ -330,7 +331,7 @@ function UpsellCard({ c, onRoute }: { c: Client; onRoute: boolean }) {
         <span className="font-semibold text-orange-700">Pitch {PRODUCT_LABEL[line].toLowerCase()}.</span>{' '}
         <span className="text-slate-500">Buys {c.product_lines.map((p) => PRODUCT_LABEL[p].toLowerCase()).join(', ')}.</span>
       </p>
-      <p className="text-sm text-slate-700 italic bg-orange-50 rounded-lg p-2.5 mt-1.5">“{pitch}”</p>
+      <p className="text-sm text-slate-700 italic bg-orange-50 rounded-lg p-2.5 mt-1.5 whitespace-pre-line">“{pitch}”</p>
       <div className="grid grid-cols-2 gap-2 mt-2">
         {c.phone ? (
           <a href={`sms:${c.phone}?body=${encodeURIComponent(pitch)}`} className="h-11 rounded-xl bg-slate-100 active:bg-slate-200 font-semibold text-sm flex items-center justify-center gap-1.5">

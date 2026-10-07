@@ -238,34 +238,34 @@ function whyLine(p: Place, category: Category, reasons: FitReason[]): string {
 }
 
 /** Top two product lines to lead with, plus an opening line, by business type. */
-export function prospectPitch(category: Category, p: Pick<Place, 'name' | 'servesBrunch' | 'servesCocktails'>): { lines: [ProductLine, ProductLine]; text: string } {
+export function prospectPitch(category: Category, p: Pick<Place, 'name' | 'servesBrunch' | 'servesCocktails'>): { lines: [ProductLine, ProductLine]; en: string; es: string } {
   switch (category) {
     case 'juice':
-      return { lines: ['cold_pressed', 'produce'], text: `Hi! I'm with Dua Food, a local family distributor. We deliver fresh produce and cold-pressed juices in El Paso. Could I drop off some fruit and a few bottles for you to try?` }
+      return { lines: ['cold_pressed', 'produce'], en: `Hi! I'm with Dua Food, a local family distributor. We deliver fresh produce and cold-pressed juices in El Paso. Could I drop off some fruit and a few bottles for you to try?`, es: `¡Hola! Soy de Dua Food, una distribuidora local y familiar. Entregamos fruta y verdura fresca y jugos prensados en frío aquí en El Paso. ¿Le puedo dejar fruta y unas botellas para que las pruebe?` }
     case 'gym':
-      return { lines: ['cold_pressed', 'produce'], text: `Hi! I'm with Dua Food, local and family-owned. Our cold-pressed juices sell well at gyms and wellness studios: high margin, no prep. Can I leave a few samples for your members?` }
+      return { lines: ['cold_pressed', 'produce'], en: `Hi! I'm with Dua Food, local and family-owned. Our cold-pressed juices sell well at gyms and wellness studios: high margin, no prep. Can I leave a few samples for your members?`, es: `¡Hola! Soy de Dua Food, empresa local y familiar. Nuestros jugos prensados en frío se venden muy bien en gimnasios: buen margen y sin preparación. ¿Le dejo unas muestras para sus clientes?` }
     case 'taqueria':
-      return { lines: ['produce', 'prepped_veg'], text: `Hi! I'm with Dua Food, a local family distributor. We deliver fresh produce and prepped veggies (diced onion, cilantro, pico mix) that save your kitchen prep time. Can I bring you a sample and a price sheet?` }
+      return { lines: ['produce', 'prepped_veg'], en: `Hi! I'm with Dua Food, a local family distributor. We deliver fresh produce and prepped veggies (diced onion, cilantro, pico mix) that save your kitchen prep time. Can I bring you a sample and a price sheet?`, es: `¡Hola! Soy de Dua Food, una distribuidora local y familiar. Entregamos verdura fresca y ya preparada (cebolla picada, cilantro, pico de gallo) para ahorrarle tiempo en la cocina. ¿Le traigo una muestra y la lista de precios?` }
     case 'bar':
-      return { lines: ['commercial_juice', 'produce'], text: `Hi! I'm with Dua Food, local and family-owned. We supply bar juices (OJ, cranberry, pineapple, lime) plus garnish produce, all on one delivery. Can I send you our price list?` }
+      return { lines: ['commercial_juice', 'produce'], en: `Hi! I'm with Dua Food, local and family-owned. We supply bar juices (OJ, cranberry, pineapple, lime) plus garnish produce, all on one delivery. Can I send you our price list?`, es: `¡Hola! Soy de Dua Food, empresa local y familiar. Surtimos jugos para bar (naranja, arándano, piña, limón) y fruta para garnish, todo en una sola entrega. ¿Le mando nuestra lista de precios?` }
     case 'cafe':
-      return { lines: ['cold_pressed', 'produce'], text: `Hi! I'm with Dua Food, a local family distributor. Our cold-pressed juices are an easy grab-and-go add, and we deliver fresh produce too. Can I drop off a few bottles to try?` }
+      return { lines: ['cold_pressed', 'produce'], en: `Hi! I'm with Dua Food, a local family distributor. Our cold-pressed juices are an easy grab-and-go add, and we deliver fresh produce too. Can I drop off a few bottles to try?`, es: `¡Hola! Soy de Dua Food, una distribuidora local y familiar. Nuestros jugos prensados en frío son fáciles de vender para llevar, y también entregamos fruta y verdura fresca. ¿Le dejo unas botellas para probar?` }
     case 'bakery':
-      return { lines: ['produce', 'commercial_juice'], text: `Hi! I'm with Dua Food, local and family-owned. We deliver fresh fruit for baking and juices for your case, priced every week. Can I bring you a price sheet?` }
+      return { lines: ['produce', 'commercial_juice'], en: `Hi! I'm with Dua Food, local and family-owned. We deliver fresh fruit for baking and juices for your case, priced every week. Can I bring you a price sheet?`, es: `¡Hola! Soy de Dua Food, empresa local y familiar. Entregamos fruta fresca para repostería y jugos para su vitrina, con precios cada semana. ¿Le traigo la lista de precios?` }
     case 'catering':
     case 'cafeteria':
     case 'ghost_kitchen':
-      return { lines: ['prepped_veg', 'produce'], text: `Hi! I'm with Dua Food, a local family distributor. Our prepped veggies come diced, sliced and shredded, ready for volume, with fresh produce on the same truck. Can I bring you a sample tray?` }
+      return { lines: ['prepped_veg', 'produce'], en: `Hi! I'm with Dua Food, a local family distributor. Our prepped veggies come diced, sliced and shredded, ready for volume, with fresh produce on the same truck. Can I bring you a sample tray?`, es: `¡Hola! Soy de Dua Food, una distribuidora local y familiar. Nuestra verdura preparada viene picada, rebanada y rallada, lista para volumen, y la verdura fresca viene en el mismo camión. ¿Le traigo una charola de muestra?` }
     case 'food_truck':
-      return { lines: ['prepped_veg', 'produce'], text: `Hi! I'm with Dua Food, local and family-owned. We deliver prepped veggies and fresh produce so you can prep less in a small kitchen. Want to try a sample?` }
+      return { lines: ['prepped_veg', 'produce'], en: `Hi! I'm with Dua Food, local and family-owned. We deliver prepped veggies and fresh produce so you can prep less in a small kitchen. Want to try a sample?`, es: `¡Hola! Soy de Dua Food, empresa local y familiar. Le entregamos verdura preparada y fresca para que prepare menos en una cocina pequeña. ¿Quiere probar una muestra?` }
     case 'hotel':
-      return { lines: ['produce', 'commercial_juice'], text: `Hi! I'm with Dua Food, a local family distributor. We supply fresh produce and breakfast juices for hotel kitchens, delivered on your schedule. Who handles your purchasing?` }
+      return { lines: ['produce', 'commercial_juice'], en: `Hi! I'm with Dua Food, a local family distributor. We supply fresh produce and breakfast juices for hotel kitchens, delivered on your schedule. Who handles your purchasing?`, es: `¡Hola! Soy de Dua Food, una distribuidora local y familiar. Surtimos fruta y verdura fresca y jugos para desayuno a cocinas de hotel, en el horario que necesite. ¿Quién se encarga de las compras?` }
     case 'market':
-      return { lines: ['produce', 'cold_pressed'], text: `Hi! I'm with Dua Food, local and family-owned. We deliver fresh produce and bottled cold-pressed juices for your shelves. Can I bring you our weekly price sheet?` }
+      return { lines: ['produce', 'cold_pressed'], en: `Hi! I'm with Dua Food, local and family-owned. We deliver fresh produce and bottled cold-pressed juices for your shelves. Can I bring you our weekly price sheet?`, es: `¡Hola! Soy de Dua Food, empresa local y familiar. Entregamos fruta y verdura fresca y jugos prensados en frío embotellados para sus anaqueles. ¿Le traigo nuestra lista de precios semanal?` }
     default:
       return p.servesBrunch
-        ? { lines: ['produce', 'cold_pressed'], text: `Hi! I'm with Dua Food, a local family distributor. We deliver fresh produce plus cold-pressed juices that fit a brunch menu. Can I drop off a sample?` }
-        : { lines: ['produce', 'prepped_veg'], text: `Hi! I'm with Dua Food, a local family distributor. We deliver fresh produce and prepped veggies, priced weekly, with a real person (me) you can call. Can I bring you a sample and our price sheet?` }
+        ? { lines: ['produce', 'cold_pressed'], en: `Hi! I'm with Dua Food, a local family distributor. We deliver fresh produce plus cold-pressed juices that fit a brunch menu. Can I drop off a sample?`, es: `¡Hola! Soy de Dua Food, una distribuidora local y familiar. Entregamos fruta y verdura fresca y jugos prensados en frío ideales para un menú de brunch. ¿Le dejo una muestra?` }
+        : { lines: ['produce', 'prepped_veg'], en: `Hi! I'm with Dua Food, a local family distributor. We deliver fresh produce and prepped veggies, priced weekly, with a real person (me) you can call. Can I bring you a sample and our price sheet?`, es: `¡Hola! Soy de Dua Food, una distribuidora local y familiar. Entregamos fruta y verdura fresca y verdura preparada, con precios cada semana y una persona real (yo) a quien llamar. ¿Le traigo una muestra y la lista de precios?` }
   }
 }
 

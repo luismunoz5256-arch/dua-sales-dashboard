@@ -1,5 +1,6 @@
 import { FREQUENCY_DAYS, INTERACTION_LABEL } from './constants'
 import { addDays, toDateStr } from './dates'
+import { GOAL_BONUS, goalBonuses } from './goals'
 import { dayKind } from './priority'
 import type { Client, DataSet, DateStr, InteractionType, Settings } from './types'
 
@@ -29,7 +30,7 @@ export function clientSize(c: Pick<Client, 'typical_order_size' | 'order_frequen
 
 export const winPoints = (c: Pick<Client, 'typical_order_size' | 'order_frequency'>) => WIN_POINTS[clientSize(c)]
 
-export type EventKind = InteractionType | 'followup' | 'win'
+export type EventKind = InteractionType | 'followup' | 'win' | 'goal'
 
 export interface ScoreEvent {
   date: DateStr
@@ -45,7 +46,7 @@ export interface ScoreEvent {
  * Every point comes from something already in your data, so totals are always explainable
  * and Undo / delete takes the points back automatically.
  */
-export function scoreEvents(data: DataSet): ScoreEvent[] {
+export function scoreEvents(data: DataSet, settings: Settings): ScoreEvent[] {
   const names = new Map(data.clients.map((c) => [c.id, c.business_name]))
   const events: ScoreEvent[] = []
   const seen = new Set<string>()
@@ -73,6 +74,8 @@ export function scoreEvents(data: DataSet): ScoreEvent[] {
       at: `${c.account_start_date}T12:00:00.000Z`,
     })
   }
+  for (const g of goalBonuses(data, settings))
+    events.push({ date: g.date, points: GOAL_BONUS, kind: 'goal', label: g.label, clientId: null, at: `${g.date}T23:59:59.000Z` })
   return events.sort((a, b) => b.date.localeCompare(a.date) || b.at.localeCompare(a.at))
 }
 

@@ -12,14 +12,14 @@ import { Button } from './ui'
 export function ScoreFx() {
   const { ready } = useStore()
   const { total, current, events } = useScore()
-  const prev = useRef<{ total: number; level: number } | null>(null)
+  const prev = useRef<{ total: number; level: number; goalsToday: number } | null>(null)
   const [bubble, setBubble] = useState<{ id: number; points: number } | null>(null)
   const [celebrate, setCelebrate] = useState<{ title: string; body: string; emoji: string } | null>(null)
 
   useEffect(() => {
     if (!ready) return
     const before = prev.current
-    prev.current = { total, level: current.level }
+    prev.current = { total, level: current.level, goalsToday: countGoalsToday(events) }
     if (!before || total <= before.total) return
     const gained = total - before.total
     // Big jumps come from loading data, bulk import or sample data, not from something you just did.
@@ -32,6 +32,10 @@ export function ScoreFx() {
       setCelebrate({ emoji: current.emoji, title: `Level ${current.level}: ${current.name}!`, body: `${winText} You've reached ${total.toLocaleString()} points. Keep it going.`.trim() })
     } else if (win) {
       setCelebrate({ emoji: '🤝', title: `Client secured! +${win.points}`, body: `${win.label.replace('Secured ', '')} is now an account.` })
+    } else {
+      const goal = events.find((e) => e.kind === 'goal' && e.date === today())
+      const goalsBefore = before.goalsToday
+      if (goal && countGoalsToday(events) > goalsBefore) setCelebrate({ emoji: '🎯', title: `Goal hit! +${goal.points}`, body: goal.label.replace('Goal hit: ', '') })
     }
     return () => clearTimeout(timer)
   }, [ready, total, current, events])
@@ -61,6 +65,8 @@ export function ScoreFx() {
     </>
   )
 }
+
+const countGoalsToday = (events: { kind: string; date: string }[]) => events.filter((e) => e.kind === 'goal' && e.date === today()).length
 
 /** Slim level bar for the top of TODAY. */
 export function LevelBar() {

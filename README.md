@@ -43,7 +43,7 @@ Copy `.env.example` to `.env.local` and fill in the Supabase keys to develop aga
 2. ✅ Clients — detail, quick-log, add/edit, CSV paste/import, CSV export
 3. ✅ TODAY — priority ranking with "why", follow-ups, upsells, leads, Maps routes
 4. ✅ Week plan — suggested plan, warehouse days, tap to move / add / remove
-5. Leads pipeline + Goals
+5. ✅ Leads pipeline + Goals
 6. Prospect Finder (Google Places, cached)
 7. Polish — weights in settings, notifications, install
 

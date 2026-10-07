@@ -3,9 +3,10 @@ import { Card, SectionTitle } from '../components/ui'
 import { INTERACTION_LABEL } from '../lib/constants'
 import { relativeDay } from '../lib/dates'
 import { ACTION_POINTS, FOLLOWUP_POINTS, levelInfo, SIZE_LABEL, WIN_POINTS, type ClientSize, type EventKind } from '../lib/score'
+import { GOAL_BONUS } from '../lib/goals'
 import { useScore } from '../lib/useScore'
 
-const KIND_LABEL: Record<EventKind, string> = { ...INTERACTION_LABEL, visit: 'Visits', call: 'Calls', text: 'Texts', sample_drop: 'Sample drops', quote_sent: 'Quotes sent', followup: 'Follow-ups done', win: 'Clients secured' }
+const KIND_LABEL: Record<EventKind, string> = { ...INTERACTION_LABEL, visit: 'Visits', call: 'Calls', text: 'Texts', sample_drop: 'Sample drops', quote_sent: 'Quotes sent', followup: 'Follow-ups done', win: 'Clients secured', goal: 'Goals hit' }
 
 export default function ScorePage() {
   const { total, current, next, progress, today, week, weekEvents, events, streak } = useScore()
@@ -56,6 +57,7 @@ export default function ScorePage() {
           <Row key={k} label={KIND_LABEL[k].replace(/s$/, '').replace('Quotes sent', 'Quote sent')} pts={ACTION_POINTS[k]} />
         ))}
         <Row label="Follow-up done" pts={FOLLOWUP_POINTS} />
+        <Row label="Hit a weekly or monthly goal" pts={GOAL_BONUS} />
         <div className="border-t border-slate-100 pt-1.5 mt-1.5">
           <p className="font-semibold">Secure a client (lead → active)</p>
           {(['small', 'medium', 'large'] as ClientSize[]).map((s) => (
@@ -89,7 +91,7 @@ export default function ScorePage() {
           <div key={i} className="flex items-center gap-2 px-3 py-2 text-sm">
             <span className="flex-1 min-w-0 truncate">{e.label}</span>
             <span className="text-xs text-slate-500">{relativeDay(e.date)}</span>
-            <span className={`font-bold w-12 text-right ${e.kind === 'win' ? 'text-brand-700' : 'text-orange-700'}`}>+{e.points}</span>
+            <span className={`font-bold w-12 text-right ${e.kind === 'win' || e.kind === 'goal' ? 'text-brand-700' : 'text-orange-700'}`}>+{e.points}</span>
           </div>
         ))}
         {events.length === 0 && <p className="p-3 text-sm text-slate-500">Nothing yet.</p>}

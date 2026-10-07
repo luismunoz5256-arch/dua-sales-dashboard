@@ -123,6 +123,10 @@ export interface Settings {
     weights: PriorityWeights
   }
   pitch_language: 'en' | 'es' | 'both'
+  /** Targets you've set on the Goals page (unset = not tracking yet). */
+  goals?: Partial<Record<'new_accounts_month' | 'visits_week' | 'leads_week' | 'multi_line_clients', number>>
+  /** Day goals were first set; bonuses only count from the period containing this day. */
+  goals_since?: string
 }
 
 export interface DataSet {

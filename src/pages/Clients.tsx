@@ -7,6 +7,7 @@ import { Button, Card, Chip, Pill } from '../components/ui'
 import { FREQUENCY_LABEL, PRODUCT_LABEL, PRODUCT_LINES, PRODUCT_SHORT, STATUS_LABEL, STATUS_STYLE } from '../lib/constants'
 import { daysAgo, relativeDay } from '../lib/dates'
 import { isNoOrderFlag } from '../lib/actions'
+import { lastContactMap } from '../lib/priority'
 import { useStore } from '../lib/store'
 import type { ProductLine, Status } from '../lib/types'
 
@@ -40,11 +41,7 @@ export default function ClientsPage() {
   const [filtersOpen, setFiltersOpen] = useState(false)
   Object.assign(saved, { q, status, areas, products, contact, sort })
 
-  const lastContact = useMemo(() => {
-    const m = new Map<string, string>()
-    for (const i of data.interactions) if ((m.get(i.client_id) ?? '') < i.date) m.set(i.client_id, i.date)
-    return m
-  }, [data.interactions])
+  const lastContact = useMemo(() => lastContactMap(data), [data])
 
   const flagged = useMemo(
     () => new Set(data.followups.filter((f) => !f.done && f.client_id && isNoOrderFlag(f)).map((f) => f.client_id!)),

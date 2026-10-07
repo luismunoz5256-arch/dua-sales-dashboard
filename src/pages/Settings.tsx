@@ -1,7 +1,7 @@
-import { Download, FileUp, Minus, Plus } from 'lucide-react'
-import { useEffect, useState, type ReactNode } from 'react'
+import { Download, FileUp } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { Button, Card, SectionTitle } from '../components/ui'
+import { Button, Card, SectionTitle, Stepper } from '../components/ui'
 import { supabase } from '../lib/backend'
 import { exportData } from '../lib/exporters'
 import { placesStatus } from '../lib/placesApi'
@@ -44,6 +44,7 @@ export default function SettingsPage() {
           </>
         )}
       </Card>
+      <SecurityCheck />
 
       <SectionTitle>Home base</SectionTitle>
       <Card className="p-4 space-y-3">
@@ -65,15 +66,14 @@ export default function SettingsPage() {
         </p>
       </Card>
 
-      <SectionTitle>Visits per field day</SectionTitle>
-      <Card className="p-4 flex items-center justify-between">
-        <StepButton label="Fewer" onClick={() => saveSettings({ ...settings, visits_per_day: Math.max(1, settings.visits_per_day - 1) })}>
-          <Minus size={22} />
-        </StepButton>
-        <span className="text-3xl font-bold">{settings.visits_per_day}</span>
-        <StepButton label="More" onClick={() => saveSettings({ ...settings, visits_per_day: Math.min(20, settings.visits_per_day + 1) })}>
-          <Plus size={22} />
-        </StepButton>
+      <SectionTitle>Visits</SectionTitle>
+      <Card>
+        <Stepper
+          label="Visits per field day"
+          value={settings.visits_per_day}
+          step={1}
+          onChange={(v) => saveSettings({ ...settings, visits_per_day: Math.max(1, Math.min(20, v)) })}
+        />
       </Card>
 
       <SectionTitle>Work days</SectionTitle>
@@ -182,17 +182,6 @@ function DayPicker({ days, onToggle, tone = 'green' }: { days: number[]; onToggl
   )
 }
 
-function StepButton({ label, onClick, children }: { label: string; onClick: () => void; children: ReactNode }) {
-  return (
-    <button
-      aria-label={label}
-      onClick={onClick}
-      className="w-14 h-14 grid place-items-center rounded-xl border border-slate-300 bg-white text-slate-800 active:bg-slate-100"
-    >
-      {children}
-    </button>
-  )
-}
 
 const WEIGHT_ORDER: RuleKey[] = ['followup_due', 'no_order', 'at_risk', 'no_contact', 'new_account', 'stale_lead', 'upsell_gap']
 
@@ -224,21 +213,6 @@ function RankingSettings({ settings, save }: { settings: Settings; save: (s: Set
         Reset ranking to defaults
       </button>
     </>
-  )
-}
-
-function Stepper({ label, value, step, onChange }: { label: string; value: number; step: number; onChange: (v: number) => void }) {
-  return (
-    <div className="flex items-center gap-2 px-3 py-2">
-      <span className="flex-1 text-sm font-medium">{label}</span>
-      <button aria-label={`Less: ${label}`} onClick={() => onChange(value - step)} className="w-11 h-11 rounded-lg border border-slate-300 grid place-items-center active:bg-slate-100">
-        <Minus size={18} />
-      </button>
-      <span className="w-10 text-center font-bold">{value}</span>
-      <button aria-label={`More: ${label}`} onClick={() => onChange(value + step)} className="w-11 h-11 rounded-lg border border-slate-300 grid place-items-center active:bg-slate-100">
-        <Plus size={18} />
-      </button>
-    </div>
   )
 }
 
@@ -434,4 +408,35 @@ function Toggle({ label, on, onChange }: { label: string; on: boolean; onChange:
       </span>
     </button>
   )
+}
+
+/**
+ * Warns if the database still lets any signed-in account in (security update not installed),
+ * or if this login isn't the owner account.
+ */
+function SecurityCheck() {
+  const [state, setState] = useState<'ok' | 'update' | 'not_owner' | null>(null)
+  useEffect(() => {
+    supabase?.rpc('is_owner').then(({ data, error }) => {
+      if (error) setState(error.code === 'PGRST202' || /is_owner/.test(error.message) ? 'update' : null)
+      else setState(data === true ? 'ok' : 'not_owner')
+    })
+  }, [])
+  if (state === 'update')
+    return (
+      <Card className="p-4 mt-3 bg-red-50 border-red-300 text-sm text-red-900">
+        <p className="font-bold">Security update needed</p>
+        <p className="mt-1">
+          Right now any account that signs up to your Supabase project could read your data. In Supabase, open <b>SQL Editor → New query</b>, paste the
+          file <b>supabase/migrations/002_owner_only.sql</b> from the project, and press <b>Run</b>. Also make sure "Allow new users to sign up" is off.
+        </p>
+      </Card>
+    )
+  if (state === 'not_owner')
+    return (
+      <Card className="p-4 mt-3 bg-amber-50 border-amber-300 text-sm">
+        This login isn't the owner account, so it can't see the data. Sign out and use your main login.
+      </Card>
+    )
+  return null
 }

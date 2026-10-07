@@ -1,16 +1,16 @@
-import { CheckCircle2, ChevronDown, ChevronRight, Info, MessageSquare, Navigation, Phone, Warehouse } from 'lucide-react'
+import { CheckCircle2, ChevronRight, Info, MessageSquare, Navigation, Warehouse } from 'lucide-react'
 import { useMemo, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { FollowupRow } from '../components/FollowupRow'
 import { LevelBar } from '../components/ScoreFx'
 import { QuickLog } from '../components/QuickLog'
 import { useToast } from '../components/Toast'
-import { Button, Card, Pill, SectionTitle } from '../components/ui'
+import { Button, CallButton, Card, Collapsible, Pill, SectionTitle } from '../components/ui'
 import { isNoOrderFlag } from '../lib/actions'
 import { CONTACT_LABEL, INTERACTION_LABEL, LEAD_STAGE_LABEL, PRODUCT_LABEL, STATUS_LABEL, STATUS_STYLE } from '../lib/constants'
 import { daysBetween, relativeDay, today } from '../lib/dates'
 import { pitchText, suggestUpsell, upsellPitch } from '../lib/pitch'
-import { planDays, weekDates } from '../lib/plan'
+import { planToday } from '../lib/plan'
 import { dayKind, lastContactMap, type Ranked } from '../lib/priority'
 import { directionsUrl, planRoute } from '../lib/route'
 import { useStore } from '../lib/store'
@@ -23,11 +23,7 @@ export default function TodayPage() {
 
   const kind = dayKind(t, settings, data)
   // Same planner as the Week screen, so edits made there show up here.
-  const { ranked, day } = useMemo(() => {
-    const dates = [...new Set([t, ...weekDates(t)])].sort()
-    const plan = planDays(data, settings, dates, t, showAnyway ? [t] : [])
-    return { ranked: plan.ranked, day: plan.days.find((d) => d.date === t)! }
-  }, [data, settings, t, showAnyway])
+  const { ranked, day } = useMemo(() => planToday(data, settings, t, showAnyway), [data, settings, t, showAnyway])
   const doneToday = useMemo(() => {
     const m = new Map<string, string>()
     for (const i of data.interactions) if (i.date === t) m.set(i.client_id, INTERACTION_LABEL[i.type])
@@ -211,7 +207,7 @@ export default function TodayPage() {
       ) : (
         <Card className="divide-y divide-slate-100 overflow-hidden">
           {dueFollowups.slice(0, 6).map((f) => (
-            <FollowupRow key={f.id} f={f} clientName={f.client_id ? names.get(f.client_id) : undefined} />
+            <FollowupRow key={f.id} f={f} clientName={(f.client_id && names.get(f.client_id)) || ''} />
           ))}
           {dueFollowups.length > 6 && (
             <Link to="/followups" className="block p-3 text-center text-sm font-semibold text-brand-700">
@@ -275,11 +271,7 @@ function ClientHeader({ c, right }: { c: Client; right?: ReactNode }) {
         </p>
       </Link>
       {right}
-      {c.phone && (
-        <a href={`tel:${c.phone}`} aria-label={`Call ${c.business_name}`} className="w-11 h-11 shrink-0 rounded-full bg-brand-50 text-brand-700 grid place-items-center active:bg-brand-100">
-          <Phone size={20} />
-        </a>
-      )}
+      <CallButton phone={c.phone} name={c.business_name} />
     </div>
   )
 }
@@ -367,21 +359,6 @@ function LeadCard({ c, lastContact, onRoute }: { c: Client; lastContact: string 
         <QuickLog client={c} size="sm" />
       </Collapsible>
     </Card>
-  )
-}
-
-function Collapsible({ title, children, small }: { title: string; children: ReactNode; small?: boolean }) {
-  const [open, setOpen] = useState(false)
-  return (
-    <div className={small ? 'mt-1' : 'mt-3'}>
-      <button
-        onClick={() => setOpen(!open)}
-        className={`flex items-center gap-1 font-semibold text-slate-600 ${small ? 'text-xs h-9' : 'text-sm h-10 px-1'}`}
-      >
-        <ChevronDown size={16} className={`transition-transform ${open ? 'rotate-180' : ''}`} /> {title}
-      </button>
-      {open && <div className={small ? '' : 'mt-1'}>{children}</div>}
-    </div>
   )
 }
 

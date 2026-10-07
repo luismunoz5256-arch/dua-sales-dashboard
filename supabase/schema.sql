@@ -1,8 +1,7 @@
 -- Dua Food Sales Dashboard — database schema
 -- Run this once in Supabase: Dashboard > SQL Editor > New query > paste > Run.
--- Single-user app: every table is readable/writable by any signed-in user,
--- so turn OFF "Allow new users to sign up" (Authentication > Sign In / Providers)
--- after creating your own login.
+-- Single-user app: only the first account created in this project can read or write data.
+-- Still turn OFF "Allow new users to sign up" (Authentication > Sign In / Providers) after creating your login.
 
 create extension if not exists pgcrypto;
 
@@ -122,7 +121,16 @@ create table if not exists push_subscriptions (
   created_at timestamptz not null default now()
 );
 
--- Row level security: signed-in user only.
+-- Row level security: only the project owner (the first account created) can read or change data.
+create or replace function public.is_owner() returns boolean
+language sql security definer stable set search_path = ''
+as $$
+  select auth.uid() is not null
+     and auth.uid() = (select id from auth.users order by created_at asc limit 1)
+$$;
+revoke all on function public.is_owner() from public;
+grant execute on function public.is_owner() to authenticated;
+
 do $$
 declare t text;
 begin
@@ -130,6 +138,7 @@ begin
                            'prospects','places_cache','settings','push_subscriptions'] loop
     execute format('alter table %I enable row level security', t);
     execute format('drop policy if exists "signed in" on %I', t);
-    execute format('create policy "signed in" on %I for all to authenticated using (true) with check (true)', t);
+    execute format('drop policy if exists "owner only" on %I', t);
+    execute format('create policy "owner only" on %I for all to authenticated using (public.is_owner()) with check (public.is_owner())', t);
   end loop;
 end $$;

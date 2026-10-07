@@ -31,7 +31,7 @@ export default function FollowupsPage() {
             </SectionTitle>
             <Card className="divide-y divide-slate-100 overflow-hidden">
               {list.map((f) => (
-                <FollowupRow key={f.id} f={f} clientName={f.client_id ? names.get(f.client_id) : undefined} />
+                <FollowupRow key={f.id} f={f} clientName={(f.client_id && names.get(f.client_id)) || ''} />
               ))}
             </Card>
           </div>

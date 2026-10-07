@@ -37,7 +37,9 @@ export function parseDelimited(text: string): string[][] {
 
 function cell(v: unknown): string {
   if (v == null) return ''
-  const s = Array.isArray(v) ? v.join('; ') : String(v)
+  let s = Array.isArray(v) ? v.join('; ') : String(v)
+  // Text starting with = + - @ would run as a formula in Excel/Sheets (names come from Google too).
+  if (typeof v !== 'number' && /^[=+\-@\t\r]/.test(s)) s = `'${s}`
   return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s
 }
 

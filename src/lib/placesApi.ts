@@ -72,7 +72,8 @@ export async function searchPlaces(p: SearchParams): Promise<SearchResult> {
   const k = keyOf(p)
   if (!p.refresh) {
     const local = readLocal()[k]
-    if (local && !local.sample) return { ...local, cached: true }
+    // Same 30-day lifetime as the server cache.
+    if (local && !local.sample && Date.now() - new Date(local.fetchedAt).getTime() < 30 * 86400000) return { ...local, cached: true }
   }
   if (!supabase) return sample(p)
   let res: Response

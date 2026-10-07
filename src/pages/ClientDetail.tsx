@@ -1,16 +1,17 @@
-import { Check, ChevronRight, MapPin, MessageSquare, Pencil, Phone, Plus, ShoppingCart } from 'lucide-react'
+import { ChevronRight, MapPin, MessageSquare, Pencil, Phone, Plus, ShoppingCart } from 'lucide-react'
 import { useMemo, useState, type ReactNode } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { DateChips, DUE_PRESETS, Label, TextInput } from '../components/fields'
+import { FollowupRow } from '../components/FollowupRow'
 import { LogSheet, QuickLog } from '../components/QuickLog'
 import { Sheet } from '../components/Sheet'
 import { useToast } from '../components/Toast'
 import { Button, Card, Pill, SectionTitle } from '../components/ui'
-import { isNoOrderFlag, mapsUrl, useActions } from '../lib/actions'
+import { mapsUrl, useActions } from '../lib/actions'
 import {
   CONTACT_LABEL, FREQUENCY_LABEL, INTERACTION_LABEL, LEAD_STAGE_LABEL, PRODUCT_LABEL, PRODUCT_LINES, STATUS_LABEL, STATUS_STYLE,
 } from '../lib/constants'
-import { parseDate, relativeDay, today } from '../lib/dates'
+import { parseDate, relativeDay } from '../lib/dates'
 import { useStore } from '../lib/store'
 import type { DateStr, Interaction } from '../lib/types'
 
@@ -19,7 +20,7 @@ const money = (n: number | null) => (n == null ? '—' : `$${n.toLocaleString(un
 export default function ClientDetail() {
   const { id } = useParams()
   const { data } = useStore()
-  const { setFollowupDone, addFollowup } = useActions()
+  const { addFollowup } = useActions()
   const toast = useToast()
   const [editing, setEditing] = useState<Interaction | null>(null)
   const [addingFollowup, setAddingFollowup] = useState(false)
@@ -41,7 +42,6 @@ export default function ClientDetail() {
   if (!client) return <p className="text-center text-slate-500 py-16">Client not found.</p>
 
   const maps = mapsUrl(client)
-  const t = today()
   const missing = PRODUCT_LINES.filter((p) => p !== 'other' && !client.product_lines.includes(p))
   const orderAmount = (i: Interaction) => orders.find((o) => o.date === i.date && o.created_at === i.created_at)?.amount
 
@@ -88,31 +88,10 @@ export default function ClientDetail() {
       {followups.length === 0 ? (
         <p className="text-sm text-slate-500 px-1">None open.</p>
       ) : (
-        <Card className="divide-y divide-slate-100">
-          {followups.map((f) => {
-            const overdue = f.due_date < t
-            return (
-              <div key={f.id} className={`flex items-center gap-3 p-3 ${isNoOrderFlag(f) ? 'bg-amber-50' : ''}`}>
-                <button
-                  onClick={() => {
-                    setFollowupDone(f, true)
-                    toast('Follow-up done', [{ label: 'Undo', onClick: () => setFollowupDone(f, false) }])
-                  }}
-                  aria-label="Mark done"
-                  className="w-11 h-11 shrink-0 rounded-full border-2 border-slate-300 grid place-items-center active:bg-brand-100 text-transparent active:text-brand-700"
-                >
-                  <Check size={22} />
-                </button>
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium">{f.task}</p>
-                  <p className={`text-xs font-semibold ${overdue ? 'text-red-600' : f.due_date === t ? 'text-orange-600' : 'text-slate-500'}`}>
-                    {overdue ? 'Overdue · ' : 'Due '}
-                    {relativeDay(f.due_date)}
-                  </p>
-                </div>
-              </div>
-            )
-          })}
+        <Card className="divide-y divide-slate-100 overflow-hidden">
+          {followups.map((f) => (
+            <FollowupRow key={f.id} f={f} />
+          ))}
         </Card>
       )}
 

@@ -23,6 +23,9 @@ export function weekDates(t: DateStr, offset = 0): DateStr[] {
   return Array.from({ length: 7 }, (_, i) => addDays(start, i))
 }
 
+/** day_status note marking a day you deliberately emptied (so it isn't refilled with suggestions). */
+export const NO_VISITS_NOTE = 'no-visits'
+
 export interface PlannedDay {
   date: DateStr
   kind: DayKind
@@ -43,6 +46,12 @@ export interface WeekPlan {
  * every other field day (today onward) gets a suggestion, best-need areas first,
  * without repeating anyone who's already on another day this week.
  */
+/** Today's plan, computed with the rest of the week so it never repeats someone planned on another day. */
+export function planToday(data: DataSet, settings: Settings, t: DateStr, forceField = false): { ranked: Ranked[]; day: PlannedDay } {
+  const plan = planDays(data, settings, [...new Set([t, ...weekDates(t)])].sort(), t, forceField ? [t] : [])
+  return { ranked: plan.ranked, day: plan.days.find((d) => d.date === t)! }
+}
+
 export function planDays(data: DataSet, settings: Settings, dates: DateStr[], t: DateStr, forceField: DateStr[] = []): WeekPlan {
   const ranked = rankClients(asOfMorning(data, t), settings, t)
   const byId = new Map(ranked.map((r) => [r.client.id, r]))
@@ -59,6 +68,8 @@ export function planDays(data: DataSet, settings: Settings, dates: DateStr[], t:
     if (!dates.includes(row.date)) continue
     savedByDate.set(row.date, [...(savedByDate.get(row.date) ?? []), row.client_id])
   }
+  // A day you emptied on purpose stays empty.
+  for (const d of data.day_status) if (d.note === NO_VISITS_NOTE && dates.includes(d.id) && !savedByDate.has(d.id)) savedByDate.set(d.id, [])
   const taken = new Set<string>()
   for (const [date, ids] of savedByDate) if (date >= t) ids.forEach((id) => taken.add(id))
 

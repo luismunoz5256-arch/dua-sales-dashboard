@@ -8,7 +8,7 @@ import { PRODUCT_LABEL } from '../lib/constants'
 import { downloadFile, toCsv } from '../lib/csv'
 import { relativeDay, toDateStr, today } from '../lib/dates'
 import { newId, nowIso } from '../lib/ids'
-import { planDays, weekDates } from '../lib/plan'
+import { planToday } from '../lib/plan'
 import { SearchError, searchPlaces, type SearchParams, type SearchResult } from '../lib/placesApi'
 import {
   areaCenter, BUSINESS_TYPES, computeFit, DEFAULT_CHAINS, DEFAULT_FIT_WEIGHTS, findExisting, normName, PRICE_LABEL, prospectPitch,
@@ -60,8 +60,7 @@ export default function FindPage() {
   const t = today()
   const typeMeta = BUSINESS_TYPES.find((b) => b.key === type)!
   const routeStops = useMemo(() => {
-    const plan = planDays(data, settings, [...new Set([t, ...weekDates(t)])].sort(), t)
-    return plan.days.find((d) => d.date === t)?.visits.map((v) => v.client).filter((c) => c.lat != null && c.lng != null) ?? []
+    return planToday(data, settings, t).day.visits.map((v) => v.client).filter((c) => c.lat != null && c.lng != null)
   }, [data, settings, t])
 
   async function buildParams(w: Where, refresh = false): Promise<SearchParams> {
@@ -225,7 +224,7 @@ export default function FindPage() {
         `Found with Prospect Finder: ${place.typeLabel ?? fit.category}${place.rating ? `, ★${place.rating} (${place.reviews} reviews)` : ''}.`,
         `Why: ${fit.why}.`,
         `Lead with: ${pitch.lines.map((l) => PRODUCT_LABEL[l]).join(' + ')}.`,
-        place.website ? `Website: ${place.website}` : null,
+        isWebUrl(place.website) ? `Website: ${place.website}` : null,
       ]
         .filter(Boolean)
         .join('\n'),
@@ -499,11 +498,11 @@ function ResultCard({
       </div>
 
       <div className="flex flex-wrap gap-1.5 mt-2">
-        {place.website && <LinkChip href={place.website} icon={<Globe size={14} />} label="Website" />}
+        {isWebUrl(place.website) && <LinkChip href={place.website!} icon={<Globe size={14} />} label="Website" />}
         <LinkChip href={social.instagram} icon={<ExternalLink size={14} />} label="Instagram" />
         <LinkChip href={social.facebook} icon={<ExternalLink size={14} />} label="Facebook" />
-        {place.mapsUrl && <LinkChip href={place.mapsUrl} icon={<MapPin size={14} />} label="Maps" />}
-        {!place.mapsUrl && place.address && (
+        {isWebUrl(place.mapsUrl) && <LinkChip href={place.mapsUrl!} icon={<MapPin size={14} />} label="Maps" />}
+        {!isWebUrl(place.mapsUrl) && place.address && (
           <LinkChip href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${place.name}, ${place.address}`)}`} icon={<MapPin size={14} />} label="Maps" />
         )}
         {place.phone && <LinkChip href={`tel:${place.phone}`} icon={<Phone size={14} />} label="Call" external={false} />}
@@ -525,6 +524,9 @@ function ResultCard({
     </Card>
   )
 }
+
+/** Only open normal web addresses that came from Google (never javascript: or other schemes). */
+const isWebUrl = (u: string | null): boolean => !!u && /^https?:\/\//i.test(u)
 
 function LinkChip({ href, icon, label, external = true }: { href: string; icon: ReactNode; label: string; external?: boolean }) {
   return (

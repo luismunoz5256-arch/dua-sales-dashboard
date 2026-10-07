@@ -18,14 +18,12 @@ import { withDefaults } from '../src/lib/settings.js'
 import { today } from '../src/lib/dates.js'
 import { middayMessage, morningMessage, type PushMessage } from '../src/lib/notifyText.js'
 import type { DataSet, Settings } from '../src/lib/types.js'
+import { bearer, checkOwner, env, readBody, safeEqual, supabaseUrl } from './_lib/server.js'
 
 const TABLES = ['clients', 'interactions', 'followups', 'week_plan', 'day_status'] as const
 
 export default async function handler(req: any, res: any) {
-  // Trim: values pasted on a phone often pick up a stray space or line break.
-  const env = (...names: string[]) => names.map((n) => process.env[n]?.trim()).find(Boolean)
-  const url = env('SUPABASE_URL', 'VITE_SUPABASE_URL')
-  const anon = env('SUPABASE_ANON_KEY', 'VITE_SUPABASE_ANON_KEY')
+  const url = supabaseUrl()
   const service = env('SUPABASE_SERVICE_ROLE_KEY')
   const pub = env('VAPID_PUBLIC_KEY', 'VITE_VAPID_PUBLIC_KEY')
   const priv = env('VAPID_PRIVATE_KEY')
@@ -37,19 +35,16 @@ export default async function handler(req: any, res: any) {
   if (req.method === 'GET' && req.query?.publicKey) return res.status(missing.length ? 501 : 200).json({ publicKey: missing.length ? null : pub, missing })
   if (missing.length) return res.status(501).json({ error: 'not_configured', missing })
 
-  const auth = String(req.headers.authorization ?? '')
-  const isCron = auth === `Bearer ${cronSecret}`
-  let isUser = false
-  if (!isCron && anon) {
-    const who = await fetch(`${url}/auth/v1/user`, { headers: { apikey: anon, Authorization: auth } })
-    isUser = who.ok
-  }
+  // Vercel Cron sends the secret; otherwise it must be the signed-in owner (test button).
+  const token = bearer(req)
+  const isCron = safeEqual(token, cronSecret!)
+  const isUser = !isCron && (await checkOwner(token)).ok
   if (!isCron && !isUser) return res.status(401).json({ error: 'unauthorized' })
 
   const db = createClient(url!, service!, { auth: { persistSession: false } })
   webpush.setVapidDetails('mailto:noreply@dua-sales.app', pub!, priv!)
 
-  const body = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : req.body ?? {}
+  const body = readBody(req)
   const slot = String(req.query?.slot ?? body.slot ?? '')
   let message: PushMessage | null
 

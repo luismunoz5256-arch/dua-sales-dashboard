@@ -1,11 +1,11 @@
-import { ChevronDown, ChevronRight, Phone, Plus } from 'lucide-react'
+import { ChevronRight, Plus } from 'lucide-react'
 import { useMemo, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { ChoiceChips, Label, MultiChips, TextInput } from '../components/fields'
 import { QuickLog } from '../components/QuickLog'
 import { Sheet } from '../components/Sheet'
 import { useToast } from '../components/Toast'
-import { Button, Card, Pill } from '../components/ui'
+import { Button, CallButton, Card, Collapsible, Pill } from '../components/ui'
 import { useActions } from '../lib/actions'
 import { FREQUENCIES, FREQUENCY_LABEL, LEAD_STAGE_LABEL, PRODUCT_LABEL, PRODUCT_LINES } from '../lib/constants'
 import { daysBetween, relativeDay, today } from '../lib/dates'
@@ -155,7 +155,11 @@ export default function LeadsPage() {
                   Reopen lead
                 </button>
               )}
-              {OPEN.includes(stage) && <LogToggle c={c} />}
+              {OPEN.includes(stage) && (
+                <Collapsible title="Log" small>
+                  <QuickLog client={c} size="sm" />
+                </Collapsible>
+              )}
             </LeadCard>
           )
         })}
@@ -205,29 +209,13 @@ function LeadCard({ c, children }: { c: Client; children: ReactNode }) {
           </p>
           {c.contact_name && <p className="text-xs text-slate-500">{c.contact_name}</p>}
         </Link>
-        {c.phone && (
-          <a href={`tel:${c.phone}`} aria-label={`Call ${c.business_name}`} className="w-11 h-11 shrink-0 rounded-full bg-brand-50 text-brand-700 grid place-items-center active:bg-brand-100">
-            <Phone size={20} />
-          </a>
-        )}
+        <CallButton phone={c.phone} name={c.business_name} />
         <Link to={`/clients/${c.id}`} aria-label="Open" className="w-8 h-11 grid place-items-center text-slate-300">
           <ChevronRight size={18} />
         </Link>
       </div>
       {children}
     </Card>
-  )
-}
-
-function LogToggle({ c }: { c: Client }) {
-  const [open, setOpen] = useState(false)
-  return (
-    <div className="mt-1">
-      <button onClick={() => setOpen(!open)} className="flex items-center gap-1 text-xs font-semibold text-slate-600 h-9">
-        <ChevronDown size={16} className={`transition-transform ${open ? 'rotate-180' : ''}`} /> Log
-      </button>
-      {open && <QuickLog client={c} size="sm" />}
-    </div>
   )
 }
 

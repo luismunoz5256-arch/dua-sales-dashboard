@@ -7,7 +7,7 @@ import { Card, Chip, Pill } from '../components/ui'
 import { STATUS_LABEL, STATUS_STYLE } from '../lib/constants'
 import { parseDate, today } from '../lib/dates'
 import { newId, nowIso } from '../lib/ids'
-import { planDays, weekDates, type PlannedDay } from '../lib/plan'
+import { NO_VISITS_NOTE, planDays, weekDates, type PlannedDay } from '../lib/plan'
 import type { Ranked } from '../lib/priority'
 import { directionsUrl, planRoute } from '../lib/route'
 import { useStore } from '../lib/store'
@@ -46,13 +46,23 @@ export default function WeekPage() {
 
   /** Save a day exactly as given (this "pins" it; suggestions for other days work around it). */
   function setDayStops(date: DateStr, clientIds: string[]) {
+    clearDay(date)
+    const ids = [...new Set(clientIds)]
+    const now = nowIso()
+    if (ids.length) upsert('week_plan', ids.map((client_id, position) => ({ id: newId(), date, client_id, position, created_at: now })))
+    // Emptied on purpose: remember it, otherwise the day would refill with suggestions.
+    else upsert('day_status', { id: date, kind: 'field', note: NO_VISITS_NOTE })
+  }
+
+  /** Forget your edits for a day (its stops and the "emptied" marker). */
+  function clearDay(date: DateStr) {
     const old = data.week_plan.filter((w) => w.date === date).map((w) => w.id)
     if (old.length) remove('week_plan', old)
-    const now = nowIso()
-    upsert(
-      'week_plan',
-      [...new Set(clientIds)].map((client_id, position) => ({ id: newId(), date, client_id, position, created_at: now })),
-    )
+    const marker = data.day_status.find((d) => d.id === date && d.note === NO_VISITS_NOTE)
+    if (marker) {
+      if (usualKind(date, settings) === marker.kind) remove('day_status', date)
+      else upsert('day_status', { ...marker, note: null })
+    }
   }
   const idsOf = (date: DateStr) => plan.days.find((d) => d.date === date)?.visits.map((v) => v.client.id) ?? []
 
@@ -63,9 +73,9 @@ export default function WeekPage() {
 
   function setKind(day: PlannedDay, kind: DayKind) {
     if (kind === day.kind) return
+    if (day.saved) clearDay(day.date)
     if (kind === usualKind(day.date, settings)) remove('day_status', day.date)
     else upsert('day_status', { id: day.date, kind, note: null })
-    if (kind !== 'field' && day.saved) remove('week_plan', data.week_plan.filter((w) => w.date === day.date).map((w) => w.id))
     if (kind !== 'field' && day.visits.length) toast(`${fmtDay(day.date, 'long')} is now ${KIND_LABEL[kind].toLowerCase()}. Its stops moved to other days.`)
   }
 
@@ -155,7 +165,7 @@ export default function WeekPage() {
                     {day.saved && (
                       <button
                         onClick={() => {
-                          remove('week_plan', data.week_plan.filter((w) => w.date === day.date).map((w) => w.id))
+                          clearDay(day.date)
                           toast(`${fmtDay(day.date, 'long')} reset to the suggestion`)
                         }}
                         className="h-11 px-3 rounded-xl border border-slate-300 font-semibold text-sm flex items-center justify-center gap-1 active:bg-slate-100"

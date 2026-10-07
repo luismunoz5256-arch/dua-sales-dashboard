@@ -1,5 +1,5 @@
 import { isNoOrderFlag } from './constants.js'
-import { planDays, weekDates } from './plan.js'
+import { planToday } from './plan.js'
 import { dayKind } from './priority.js'
 import { planRoute } from './route.js'
 import type { DataSet, DateStr, Settings } from './types.js'
@@ -26,8 +26,7 @@ export function morningMessage(data: DataSet, settings: Settings, t: DateStr): P
   if (noOrder) parts.push(`${noOrder} hasn't ordered`)
 
   if (kind === 'field') {
-    const plan = planDays(data, settings, [...new Set([t, ...weekDates(t)])].sort(), t)
-    const visits = plan.days.find((d) => d.date === t)?.visits ?? []
+    const visits = planToday(data, settings, t).day.visits
     const home = settings.home_base.lat != null && settings.home_base.lng != null ? { lat: settings.home_base.lat, lng: settings.home_base.lng } : null
     const areas = planRoute(home, visits).map((g) => g.area)
     return {

@@ -15,6 +15,7 @@ With no Supabase keys set, the app runs in **demo mode**: no login, sample data,
 2. **SQL Editor → New query** → paste all of [`supabase/schema.sql`](supabase/schema.sql) → **Run**.
 3. **Authentication → Users → Add user → Create new user**: your email + a password. Tick "Auto confirm".
 4. **Authentication → Sign In / Providers**: turn **off** "Allow new users to sign up" (so only you can log in).
+   - **Already set up before this was added?** Also run [`supabase/migrations/002_owner_only.sql`](supabase/migrations/002_owner_only.sql) in the SQL Editor once. It locks every table to your account (the first one created), even if sign-ups get turned back on. Settings shows a red "Security update needed" card until it's done.
 5. **Project Settings → API**: copy the **Project URL** and the **anon public** key.
 
 ### 2. Vercel (hosting)
@@ -63,6 +64,8 @@ Times are set in `vercel.json` (UTC): morning `0 13 * * *`, midday `0 18 * * *`.
 npm install
 npm run dev        # http://localhost:5173 (also on your LAN IP for phone testing)
 npm run build
+npm run typecheck   # app + server functions
+npm run check:api   # loads each /api function the way Vercel runs it
 ```
 Copy `.env.example` to `.env.local` and fill in the Supabase keys to develop against the real database.
 

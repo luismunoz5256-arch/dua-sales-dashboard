@@ -8,8 +8,11 @@ import { DateChips, DUE_PRESETS } from './fields'
 import { Sheet } from './Sheet'
 import { useToast } from './Toast'
 
-/** One follow-up: Done circle, client + task (tap to open the client), Snooze. */
-export function FollowupRow({ f, clientName }: { f: Followup; clientName: string | undefined }) {
+/**
+ * One follow-up: Done circle, client + task (tap to open the client), Snooze.
+ * Without `clientName` (on the client's own page) it shows just the task.
+ */
+export function FollowupRow({ f, clientName }: { f: Followup; clientName?: string }) {
   const { setFollowupDone, snoozeFollowup } = useActions()
   const toast = useToast()
   const [snoozing, setSnoozing] = useState(false)
@@ -28,15 +31,18 @@ export function FollowupRow({ f, clientName }: { f: Followup; clientName: string
       >
         <Check size={22} />
       </button>
-      <Link to={f.client_id ? `/clients/${f.client_id}` : '/followups'} className="flex-1 min-w-0 flex items-center gap-2 py-3 pl-2 active:bg-slate-50">
+      <Link
+        to={f.client_id ? `/clients/${f.client_id}` : '/followups'}
+        className={`flex-1 min-w-0 flex items-center gap-2 py-3 pl-2 active:bg-slate-50 ${clientName === undefined ? 'pointer-events-none' : ''}`}
+      >
         <div className="flex-1 min-w-0">
-          <p className="font-semibold truncate">{clientName ?? 'No client'}</p>
-          <p className="text-sm text-slate-700">{f.task}</p>
+          {clientName !== undefined && <p className="font-semibold truncate">{clientName || 'No client'}</p>}
+          <p className={clientName === undefined ? 'font-medium' : 'text-sm text-slate-700'}>{f.task}</p>
           <p className={`text-xs font-semibold ${late ? 'text-red-600' : f.due_date === t ? 'text-orange-600' : 'text-slate-500'}`}>
             {late ? `Overdue · ${relativeDay(f.due_date)}` : `Due ${relativeDay(f.due_date)}`}
           </p>
         </div>
-        <ChevronRight size={18} className="text-slate-300 shrink-0" />
+        {clientName !== undefined && <ChevronRight size={18} className="text-slate-300 shrink-0" />}
       </Link>
       <button
         onClick={() => setSnoozing(true)}

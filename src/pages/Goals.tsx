@@ -1,7 +1,6 @@
-import { Minus, Plus } from 'lucide-react'
 import { useMemo } from 'react'
 import { useToast } from '../components/Toast'
-import { Button, Card, SectionTitle } from '../components/ui'
+import { Button, Card, SectionTitle, Stepper } from '../components/ui'
 import { daysBetween, today } from '../lib/dates'
 import { GOAL_BONUS, GOALS, history, periodBounds, progress, suggestGoals, type GoalKey } from '../lib/goals'
 import { useStore } from '../lib/store'
@@ -69,18 +68,11 @@ export default function GoalsPage() {
                   style={{ width: `${Math.round(pct * 100)}%` }}
                 />
               </div>
-              <div className="flex items-center gap-2 mt-3">
-                <span className="text-xs text-slate-500 flex-1">
-                  {past ? `Last ${g.period === 'week' ? '4 weeks' : '4 months'}: ${past.join(', ')}` : 'Counts your accounts right now'}
-                </span>
-                <span className="text-xs font-semibold text-slate-500">Goal</span>
-                <button aria-label={`Lower ${g.label}`} onClick={() => setGoal(g.key, target - 1)} className="w-10 h-10 rounded-lg border border-slate-300 grid place-items-center active:bg-slate-100">
-                  <Minus size={16} />
-                </button>
-                <span className="w-7 text-center font-bold">{target}</span>
-                <button aria-label={`Raise ${g.label}`} onClick={() => setGoal(g.key, target + 1)} className="w-10 h-10 rounded-lg border border-slate-300 grid place-items-center active:bg-slate-100">
-                  <Plus size={16} />
-                </button>
+              <p className="text-xs text-slate-500 mt-3">
+                {past ? `Last ${g.period === 'week' ? '4 weeks' : '4 months'}: ${past.join(', ')}` : 'Counts your accounts right now'}
+              </p>
+              <div className="-mx-3 -mb-2">
+                <Stepper label="Goal" name={g.label} value={target} step={1} onChange={(v) => setGoal(g.key, v)} />
               </div>
             </Card>
           )

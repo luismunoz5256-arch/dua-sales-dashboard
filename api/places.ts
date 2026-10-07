@@ -10,6 +10,7 @@
  *   DAILY_SEARCH_LIMIT      optional, default 60
  */
 import { createHash } from 'node:crypto'
+import { bearer, checkOwner, env, readBody, supabaseAnonKey, supabaseUrl } from './_lib/server.js'
 
 const QUERIES: Record<string, string> = {
   restaurants: 'independent restaurants',
@@ -46,20 +47,19 @@ type Json = Record<string, unknown>
 
 export default async function handler(req: any, res: any) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' })
-  const key = process.env.GOOGLE_PLACES_API_KEY
-  const sbUrl = process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL
-  const sbKey = process.env.SUPABASE_ANON_KEY ?? process.env.VITE_SUPABASE_ANON_KEY
-  const limit = Number(process.env.DAILY_SEARCH_LIMIT ?? 60)
-  const body: Json = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : req.body ?? {}
+  const key = env('GOOGLE_PLACES_API_KEY')
+  const sbUrl = supabaseUrl()
+  const sbKey = supabaseAnonKey()
+  const limit = Number(env('DAILY_SEARCH_LIMIT') ?? 60) || 60
+  const body: Json = readBody(req)
 
   if (!sbUrl || !sbKey) return res.status(501).json({ error: 'not_configured', detail: 'Supabase is not connected.' })
   if (!key) return res.status(501).json({ error: 'not_configured', detail: 'GOOGLE_PLACES_API_KEY is not set.' })
 
-  // Signed-in user only.
-  const token = String(req.headers.authorization ?? '').replace(/^Bearer\s+/i, '')
-  if (!token) return res.status(401).json({ error: 'sign_in_required' })
-  const who = await fetch(`${sbUrl}/auth/v1/user`, { headers: { apikey: sbKey, Authorization: `Bearer ${token}` } })
-  if (!who.ok) return res.status(401).json({ error: 'sign_in_required' })
+  // The app owner only (so nobody else can spend your Google quota).
+  const token = bearer(req)
+  const access = await checkOwner(token)
+  if (!access.ok) return res.status(401).json({ error: 'sign_in_required' })
 
   const db = async (path: string, init: RequestInit = {}) =>
     fetch(`${sbUrl}/rest/v1/${path}`, {
@@ -74,7 +74,7 @@ export default async function handler(req: any, res: any) {
     return rows[0]?.results?.count ?? 0
   }
 
-  if (body.ping) return res.status(200).json({ configured: true, usedToday: await readUsage(), limit })
+  if (body.ping) return res.status(200).json({ configured: true, usedToday: await readUsage(), limit, ownerCheck: access.ownerCheck })
 
   // Validate input: only known types, El Paso coordinates, sane radius.
   const type = String(body.type ?? '')

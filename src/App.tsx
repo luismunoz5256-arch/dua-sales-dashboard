@@ -1,20 +1,23 @@
+import { lazy } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { AuthGate } from './components/AuthGate'
 import { Layout } from './components/Layout'
-import { DataProvider } from './lib/store'
 import { ToastProvider } from './components/Toast'
+import { DataProvider } from './lib/store'
 import ClientDetail from './pages/ClientDetail'
-import ClientForm from './pages/ClientForm'
 import ClientsPage from './pages/Clients'
 import FollowupsPage from './pages/Followups'
-import ImportPage from './pages/Import'
-import ScorePage from './pages/Score'
-import FindPage from './pages/Find'
-import GoalsPage from './pages/Goals'
-import LeadsPage from './pages/Leads'
-import SettingsPage from './pages/Settings'
 import TodayPage from './pages/Today'
-import WeekPage from './pages/Week'
+
+// Everyday screens load with the app; the rest load the first time you open them.
+const ClientForm = lazy(() => import('./pages/ClientForm'))
+const FindPage = lazy(() => import('./pages/Find'))
+const GoalsPage = lazy(() => import('./pages/Goals'))
+const ImportPage = lazy(() => import('./pages/Import'))
+const LeadsPage = lazy(() => import('./pages/Leads'))
+const ScorePage = lazy(() => import('./pages/Score'))
+const SettingsPage = lazy(() => import('./pages/Settings'))
+const WeekPage = lazy(() => import('./pages/Week'))
 
 export default function App() {
   return (

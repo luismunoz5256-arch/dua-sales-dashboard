@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { backend, emptyData, TABLES, withDefaults } from './backend'
+import { mergeRows } from './rows'
 import { buildSampleData } from './seed'
 import type { DataSet, RowOf, Settings, TableName } from './types'
 
@@ -29,13 +30,7 @@ const Ctx = createContext<Store | null>(null)
 const SEEDED_FLAG = 'dua.demoSeeded'
 
 function applyUpsert<T extends TableName>(data: DataSet, table: T, rows: RowOf<T>[]): DataSet {
-  const list = [...(data[table] as RowOf<T>[])]
-  for (const row of rows) {
-    const i = list.findIndex((r) => r.id === row.id)
-    if (i >= 0) list[i] = row
-    else list.push(row)
-  }
-  return { ...data, [table]: list }
+  return { ...data, [table]: mergeRows(data[table] as RowOf<T>[], rows) }
 }
 
 function applyRemove(data: DataSet, table: TableName, ids: string[]): DataSet {

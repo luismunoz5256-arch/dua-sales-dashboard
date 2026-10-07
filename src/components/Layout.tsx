@@ -1,4 +1,5 @@
 import { ArrowLeft, CalendarDays, Home, Search, Settings, Target, Trophy, Users, Sprout } from 'lucide-react'
+import { Suspense } from 'react'
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useBackgroundGeocoding } from '../lib/geocode'
 import { useStore } from '../lib/store'
@@ -86,7 +87,9 @@ export function Layout() {
             <Button onClick={reload}>Try again</Button>
           </div>
         ) : (
-          <Outlet />
+          <Suspense fallback={<p className="text-center text-slate-400 py-16">Loading…</p>}>
+            <Outlet />
+          </Suspense>
         )}
       </main>
 

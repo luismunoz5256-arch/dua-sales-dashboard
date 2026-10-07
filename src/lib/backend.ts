@@ -1,5 +1,6 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import { withDefaults } from './settings'
+import { mergeRows } from './rows'
 import type { DataSet, RowOf, Settings, TableName } from './types'
 
 export const TABLES: TableName[] = ['clients', 'interactions', 'followups', 'orders', 'week_plan', 'day_status', 'prospects']
@@ -51,12 +52,7 @@ export class LocalBackend implements Backend {
 
   async upsert<T extends TableName>(table: T, rows: RowOf<T>[]) {
     const data = this.read()
-    const list = data[table] as RowOf<T>[]
-    for (const row of rows) {
-      const i = list.findIndex((r) => r.id === row.id)
-      if (i >= 0) list[i] = row
-      else list.push(row)
-    }
+    ;(data[table] as RowOf<T>[]) = mergeRows(data[table] as RowOf<T>[], rows)
     this.write(data)
   }
 

@@ -7,24 +7,13 @@ import { useToast } from '../components/Toast'
 import { Button, Card, Pill, SectionTitle } from '../components/ui'
 import { isNoOrderFlag } from '../lib/actions'
 import { CONTACT_LABEL, INTERACTION_LABEL, LEAD_STAGE_LABEL, PRODUCT_LABEL, STATUS_LABEL, STATUS_STYLE } from '../lib/constants'
-import { daysBetween, relativeDay, toDateStr, today } from '../lib/dates'
+import { daysBetween, relativeDay, today } from '../lib/dates'
 import { suggestUpsell, upsellPitch } from '../lib/pitch'
-import { dayKind, lastContactMap, pickDayPlan, rankClients, type Ranked } from '../lib/priority'
+import { planDays, weekDates } from '../lib/plan'
+import { dayKind, lastContactMap, type Ranked } from '../lib/priority'
 import { directionsUrl, planRoute } from '../lib/route'
 import { useStore } from '../lib/store'
-import type { Client, DataSet } from '../lib/types'
-
-/**
- * Today's plan is ranked "as of this morning" (ignoring what you've logged today), so it stays put
- * while you work through it; visited clients get a check mark instead of being replaced.
- */
-function asOfMorning(data: DataSet, t: string): DataSet {
-  return {
-    ...data,
-    interactions: data.interactions.filter((i) => i.date < t),
-    followups: data.followups.map((f) => (f.done && f.done_at && toDateStr(new Date(f.done_at)) === t ? { ...f, done: false } : f)),
-  }
-}
+import type { Client } from '../lib/types'
 
 export default function TodayPage() {
   const { data, settings, loadSampleData } = useStore()
@@ -32,7 +21,12 @@ export default function TodayPage() {
   const [showAnyway, setShowAnyway] = useState(false)
 
   const kind = dayKind(t, settings, data)
-  const ranked = useMemo(() => rankClients(asOfMorning(data, t), settings, t), [data, settings, t])
+  // Same planner as the Week screen, so edits made there show up here.
+  const { ranked, day } = useMemo(() => {
+    const dates = [...new Set([t, ...weekDates(t)])].sort()
+    const plan = planDays(data, settings, dates, t, showAnyway ? [t] : [])
+    return { ranked: plan.ranked, day: plan.days.find((d) => d.date === t)! }
+  }, [data, settings, t, showAnyway])
   const doneToday = useMemo(() => {
     const m = new Map<string, string>()
     for (const i of data.interactions) if (i.date === t) m.set(i.client_id, INTERACTION_LABEL[i.type])
@@ -41,12 +35,13 @@ export default function TodayPage() {
   const lastContact = useMemo(() => lastContactMap(data), [data])
   const names = useMemo(() => new Map(data.clients.map((c) => [c.id, c.business_name])), [data.clients])
 
-  const { visits, focusAreas, elsewhere } = useMemo(() => pickDayPlan(ranked, settings.visits_per_day), [ranked, settings.visits_per_day])
+  const visits = day.visits
   const visitIds = new Set(visits.map((v) => v.client.id))
   const home = settings.home_base.lat != null && settings.home_base.lng != null ? { lat: settings.home_base.lat, lng: settings.home_base.lng } : null
   const groups = planRoute(home, visits)
   const ordered = groups.flatMap((g) => g.stops)
-  const routeAreas = new Set(focusAreas)
+  const routeAreas = new Set(groups.map((g) => g.area))
+  const elsewhere = ranked.filter((r) => !visitIds.has(r.client.id) && !routeAreas.has(r.client.area || 'No area'))
   const nearby = ranked
     .filter((r) => !visitIds.has(r.client.id) && routeAreas.has(r.client.area || 'No area') && !doneToday.has(r.client.id))
     .slice(0, 4)
@@ -164,9 +159,16 @@ export default function TodayPage() {
               )
             })}
           </div>
-          {focusAreas.length > 0 && (
+          {groups.length > 0 && (
             <p className="text-xs text-slate-500 px-1 mt-3">
-              Today's focus: {groups.map((g) => g.area).join(' → ')}. Picked the area that needs you most, then the closest areas.
+              Today's focus: {groups.map((g) => g.area).join(' → ')}.{' '}
+              {day.saved ? (
+                <>
+                  You adjusted this day in the <Link to="/week" className="underline">Week plan</Link>.
+                </>
+              ) : (
+                'Picked the area that needs you most, then the closest areas.'
+              )}
             </p>
           )}
           {nearby.length > 0 && (
@@ -283,7 +285,7 @@ function VisitCard({ r, done, showArea }: { r: Ranked; done?: string; showArea?:
         <p className="text-sm text-slate-800">
           {showArea && r.client.area && <span className="font-semibold text-slate-500">{r.client.area} · </span>}
           <span className="font-semibold text-orange-700">Why: </span>
-          {r.reasons.slice(0, 2).map((x) => x.text).join(' · ')}
+          {r.reasons.length ? r.reasons.slice(0, 2).map((x) => x.text).join(' · ') : 'You added this stop'}
           {r.reasons.length > 2 && <span className="text-slate-500"> +{r.reasons.length - 2}</span>}
         </p>
       </button>

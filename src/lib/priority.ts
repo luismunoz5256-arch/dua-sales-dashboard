@@ -126,9 +126,13 @@ export interface DayPlan {
 
 const areaOf = (r: Ranked) => r.client.area || 'No area'
 
+/** Once a day's route has started, only areas within this many miles of it are added (no cross-town zigzags). */
+export const MAX_AREA_HOP_MILES = 8
+
 /**
  * Builds a visit list that makes geographic sense: start with the area that needs you most
- * (sum of its top scores), then fill from the next areas, preferring ones close to where you already are.
+ * (sum of its top scores), then fill from nearby areas, preferring the closest. Areas farther than
+ * MAX_AREA_HOP_MILES are left for another day, even if that leaves today a little short.
  */
 export function pickDayPlan(ranked: Ranked[], n: number): DayPlan {
   const byArea = new Map<string, Ranked[]>()
@@ -152,6 +156,7 @@ export function pickDayPlan(ranked: Ranked[], n: number): DayPlan {
       const c = center(list)
       // Each 5 miles away halves an area's appeal once you've started a route.
       const distance = here && c ? miles(here, c) : 0
+      if (distance > MAX_AREA_HOP_MILES) continue
       const value = need(list) / (1 + distance / 5)
       if (value > bestValue) {
         bestValue = value

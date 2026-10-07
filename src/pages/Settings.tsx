@@ -114,7 +114,6 @@ export default function SettingsPage() {
           [
             ['clients', 'Export clients (CSV)'],
             ['interactions', 'Export interaction log (CSV)'],
-            ['orders', 'Export orders (CSV)'],
             ['followups', 'Export follow-ups (CSV)'],
             ['backup', 'Full backup (JSON)'],
           ] as const

@@ -6,7 +6,7 @@ import { LogSheet, QuickLog } from '../components/QuickLog'
 import { Sheet } from '../components/Sheet'
 import { useToast } from '../components/Toast'
 import { Button, Card, Pill, SectionTitle } from '../components/ui'
-import { mapsUrl, useActions } from '../lib/actions'
+import { isNoOrderFlag, mapsUrl, useActions } from '../lib/actions'
 import {
   CONTACT_LABEL, FREQUENCY_LABEL, INTERACTION_LABEL, LEAD_STAGE_LABEL, PRODUCT_LABEL, PRODUCT_LINES, STATUS_LABEL, STATUS_STYLE,
 } from '../lib/constants'
@@ -92,7 +92,7 @@ export default function ClientDetail() {
           {followups.map((f) => {
             const overdue = f.due_date < t
             return (
-              <div key={f.id} className="flex items-center gap-3 p-3">
+              <div key={f.id} className={`flex items-center gap-3 p-3 ${isNoOrderFlag(f) ? 'bg-amber-50' : ''}`}>
                 <button
                   onClick={() => {
                     setFollowupDone(f, true)
@@ -118,9 +118,8 @@ export default function ClientDetail() {
 
       <SectionTitle>Account</SectionTitle>
       <Card className="p-4 grid grid-cols-2 gap-y-3 gap-x-4 text-sm">
-        <Info label="Orders" value={client.order_frequency ? FREQUENCY_LABEL[client.order_frequency] : '—'} />
-        <Info label="Typical order" value={money(client.typical_order_size)} />
-        <Info label="Last order" value={client.last_order_date ? `${relativeDay(client.last_order_date)} · ${money(client.last_order_amount)}` : 'Never'} />
+        <Info label="Usually orders" value={client.order_frequency ? FREQUENCY_LABEL[client.order_frequency] : '—'} />
+        {client.typical_order_size != null && <Info label="Typical order" value={money(client.typical_order_size)} />}
         <Info label="Prefers" value={client.preferred_contact ? CONTACT_LABEL[client.preferred_contact] : '—'} />
         <Info label="Customer since" value={client.account_start_date ? fmt(client.account_start_date) : '—'} />
         <Info label="Phone" value={client.phone ?? '—'} />

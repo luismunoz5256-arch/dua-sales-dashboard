@@ -1,4 +1,5 @@
 import { useCallback } from 'react'
+import { NO_ORDER_PREFIX, NO_ORDER_TASK } from './constants'
 import { today } from './dates'
 import { newId, nowIso } from './ids'
 import { useStore } from './store'
@@ -147,10 +148,25 @@ export function useActions() {
     [upsert],
   )
 
+  /** Flag "hasn't ordered": one open follow-up per client; flagging again just moves its due date. */
+  const flagNoOrder = useCallback(
+    (client: Client, due: DateStr, note: string, existing: Followup | null) => {
+      const task = note.trim() ? `${NO_ORDER_PREFIX} — ${note.trim()}` : NO_ORDER_TASK
+      const f: Followup = existing
+        ? { ...existing, task, due_date: due }
+        : { id: newId(), client_id: client.id, task, due_date: due, done: false, done_at: null, interaction_id: null, created_at: nowIso() }
+      upsert('followups', f)
+      return () => (existing ? upsert('followups', existing) : remove('followups', f.id))
+    },
+    [upsert, remove],
+  )
+
   const saveClient = useCallback((c: Client) => upsert('clients', { ...c, updated_at: nowIso() }), [upsert])
 
-  return { logInteraction, updateInteraction, deleteInteraction, addFollowup, setFollowupDone, saveClient }
+  return { logInteraction, updateInteraction, deleteInteraction, addFollowup, setFollowupDone, flagNoOrder, saveClient }
 }
+
+export { isNoOrderFlag, NO_ORDER_PREFIX, NO_ORDER_TASK } from './constants'
 
 export function blankClient(status: Client['status'] = 'active'): Client {
   const now = nowIso()

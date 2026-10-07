@@ -1,11 +1,11 @@
-import { MapPin, MessageSquare, MoreHorizontal, Phone, ShoppingCart } from 'lucide-react'
+import { MapPin, MessageSquare, MoreHorizontal, PackageX, Phone } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { useActions } from '../lib/actions'
-import { INTERACTION_LABEL, PRODUCT_LABEL, PRODUCT_LINES } from '../lib/constants'
+import { isNoOrderFlag, NO_ORDER_PREFIX, NO_ORDER_TASK, useActions } from '../lib/actions'
+import { INTERACTION_LABEL } from '../lib/constants'
 import { today } from '../lib/dates'
 import { useStore } from '../lib/store'
-import type { Client, DateStr, Interaction, InteractionType, ProductLine } from '../lib/types'
-import { ChoiceChips, DateChips, DUE_PRESETS, Label, MultiChips, PAST_PRESETS, TextArea, TextInput } from './fields'
+import type { Client, DateStr, Interaction, InteractionType } from '../lib/types'
+import { ChoiceChips, DateChips, DUE_PRESETS, Label, PAST_PRESETS, TextArea, TextInput } from './fields'
 import { Sheet } from './Sheet'
 import { useToast } from './Toast'
 import { Button } from './ui'
@@ -18,12 +18,13 @@ const ONE_TAP: { type: InteractionType; label: string; icon: typeof Phone }[] = 
 
 /**
  * Called / Texted / Visited log with one tap (then "Add note" or "Undo" in the toast).
- * Ordered asks for the amount. "…" opens the full log form (sample drop, quote, notes, next step).
+ * "No order" flags a client that hasn't ordered and sets a follow-up date.
+ * "More" opens the full log form (sample drop, quote, notes, next step).
  */
 export function QuickLog({ client, size = 'md' }: { client: Client; size?: 'sm' | 'md' }) {
   const { logInteraction } = useActions()
   const toast = useToast()
-  const [sheet, setSheet] = useState<null | 'order' | 'full' | Interaction>(null)
+  const [sheet, setSheet] = useState<null | 'no_order' | 'full' | Interaction>(null)
   const h = size === 'sm' ? 'h-12' : 'h-14'
 
   function oneTap(type: InteractionType) {
@@ -48,11 +49,11 @@ export function QuickLog({ client, size = 'md' }: { client: Client; size?: 'sm' 
           </button>
         ))}
         <button
-          onClick={() => setSheet('order')}
-          className={`${h} rounded-xl bg-orange-100 active:bg-orange-200 flex flex-col items-center justify-center text-[11px] font-semibold text-orange-800`}
+          onClick={() => setSheet('no_order')}
+          className={`${h} rounded-xl bg-amber-100 active:bg-amber-200 flex flex-col items-center justify-center text-[11px] font-semibold text-amber-900`}
         >
-          <ShoppingCart size={20} />
-          Ordered
+          <PackageX size={20} />
+          No order
         </button>
         <button
           onClick={() => setSheet('full')}
@@ -63,7 +64,7 @@ export function QuickLog({ client, size = 'md' }: { client: Client; size?: 'sm' 
           More
         </button>
       </div>
-      <OrderSheet client={client} open={sheet === 'order'} onClose={() => setSheet(null)} />
+      <NoOrderSheet client={client} open={sheet === 'no_order'} onClose={() => setSheet(null)} />
       <LogSheet
         client={client}
         open={sheet === 'full' || (sheet !== null && typeof sheet === 'object')}
@@ -74,54 +75,35 @@ export function QuickLog({ client, size = 'md' }: { client: Client; size?: 'sm' 
   )
 }
 
-export function OrderSheet({ client, open, onClose }: { client: Client; open: boolean; onClose: () => void }) {
-  const { logInteraction } = useActions()
+export function NoOrderSheet({ client, open, onClose }: { client: Client; open: boolean; onClose: () => void }) {
+  const { data } = useStore()
+  const { flagNoOrder } = useActions()
   const toast = useToast()
-  const [amount, setAmount] = useState('')
-  const [date, setDate] = useState<DateStr>(today())
-  const [lines, setLines] = useState<ProductLine[]>([])
+  const existing = data.followups.find((f) => f.client_id === client.id && !f.done && isNoOrderFlag(f)) ?? null
+  const [due, setDue] = useState<DateStr>(today())
+  const [note, setNote] = useState('')
 
   useEffect(() => {
     if (!open) return
-    setAmount(client.typical_order_size != null ? String(client.typical_order_size) : '')
-    setDate(today())
-    setLines(client.product_lines)
-  }, [open, client])
+    setDue(existing?.due_date ?? today())
+    setNote(existing && existing.task !== NO_ORDER_TASK ? existing.task.replace(`${NO_ORDER_PREFIX} — `, '') : '')
+  }, [open])
 
   function save() {
-    const n = parseFloat(amount.replace(/[$,]/g, ''))
-    const { undo } = logInteraction(client, 'order', {
-      date,
-      amount: Number.isFinite(n) ? n : null,
-      product_lines: lines,
-    })
+    const undo = flagNoOrder(client, due, note, existing)
     onClose()
-    toast(`Order logged for ${client.business_name}`, [{ label: 'Undo', onClick: undo }])
+    toast(`Follow-up set: ${client.business_name} hasn't ordered`, [{ label: 'Undo', onClick: undo }])
   }
 
   return (
-    <Sheet open={open} onClose={onClose} title={`Order · ${client.business_name}`}>
-      <Label>Amount</Label>
-      <div className="relative">
-        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-lg">$</span>
-        <TextInput
-          inputMode="decimal"
-          value={amount}
-          onChange={(e) => setAmount(e.target.value)}
-          placeholder="0"
-          className="pl-9 text-xl font-semibold"
-          autoFocus
-        />
-      </div>
-      <Label>Date</Label>
-      <DateChips value={date} onChange={setDate} presets={PAST_PRESETS} />
-      <Label>Products in this order</Label>
-      <MultiChips options={PRODUCT_LINES} value={lines} onChange={setLines} labels={PRODUCT_LABEL} />
-      {client.status === 'lead' && (
-        <p className="text-sm text-brand-700 font-semibold mt-4">🎉 First order: this lead becomes an active client.</p>
-      )}
+    <Sheet open={open} onClose={onClose} title={`Hasn't ordered · ${client.business_name}`}>
+      {existing && <p className="text-sm text-amber-700 font-semibold">Already flagged. Saving moves the follow-up date.</p>}
+      <Label>Follow up</Label>
+      <DateChips value={due} onChange={setDue} presets={[{ label: 'Today', days: 0 }, ...DUE_PRESETS.slice(0, 3)]} />
+      <Label>Note (optional)</Label>
+      <TextInput value={note} onChange={(e) => setNote(e.target.value)} placeholder="e.g. usually orders Mondays" />
       <Button className="w-full mt-6 h-14 text-lg" onClick={save}>
-        Save order
+        Save follow-up
       </Button>
     </Sheet>
   )

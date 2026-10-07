@@ -30,7 +30,7 @@ export default function TodayPage() {
         <Stat label="Leads" value={leads} />
       </div>
       <ComingSoon step={3}>
-        <p>Your ranked "Visit today" list grouped by area with a Google Maps route, follow-ups with Done / Snooze, upsell ideas, leads to pursue, and one-tap Called / Texted / Visited / Ordered.</p>
+        <p>Your ranked "Visit today" list grouped by area with a Google Maps route, follow-ups with Done / Snooze, upsell ideas, leads to pursue, clients flagged as hasn't ordered, and one-tap Called / Texted / Visited / No order.</p>
       </ComingSoon>
       <p className="text-sm text-center">
         <Link to="/clients" className="text-brand-700 font-semibold underline">Browse clients →</Link>

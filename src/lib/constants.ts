@@ -109,3 +109,12 @@ export const DEFAULT_SETTINGS: Settings = {
   },
   pitch_language: 'en',
 }
+
+/**
+ * "Hasn't ordered" flags are ordinary follow-ups whose task starts with this text,
+ * so they show up with the other follow-ups and need no extra database column.
+ */
+export const NO_ORDER_PREFIX = "Hasn't ordered"
+export const NO_ORDER_TASK = `${NO_ORDER_PREFIX} — follow up`
+export const isNoOrderFlag = (f: { task: string }) => f.task.startsWith(NO_ORDER_PREFIX)
+

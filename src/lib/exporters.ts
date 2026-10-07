@@ -1,10 +1,10 @@
 import { clientToRow, CLIENT_COLUMNS } from './clientCsv'
-import { INTERACTION_LABEL, PRODUCT_LABEL } from './constants'
+import { INTERACTION_LABEL } from './constants'
 import { downloadFile, toCsv } from './csv'
 import { today } from './dates'
 import type { DataSet, Settings } from './types'
 
-export function exportData(kind: 'clients' | 'interactions' | 'orders' | 'followups' | 'backup', data: DataSet, settings: Settings) {
+export function exportData(kind: 'clients' | 'interactions' | 'followups' | 'backup', data: DataSet, settings: Settings) {
   const name = new Map(data.clients.map((c) => [c.id, c.business_name]))
   const stamp = today()
   const byDate = <T extends { date?: string; due_date?: string }>(a: T, b: T) =>
@@ -22,14 +22,6 @@ export function exportData(kind: 'clients' | 'interactions' | 'orders' | 'follow
         toCsv(
           ['Date', 'Business name', 'Type', 'What was discussed', 'Outcome', 'Next step', 'Next step due'],
           [...data.interactions].sort(byDate).map((i) => [i.date, name.get(i.client_id), INTERACTION_LABEL[i.type], i.notes, i.outcome, i.next_step, i.next_step_due]),
-        ),
-      )
-    case 'orders':
-      return downloadFile(
-        `dua-orders-${stamp}.csv`,
-        toCsv(
-          ['Date', 'Business name', 'Amount', 'Products', 'Source', 'QuickBooks ref'],
-          [...data.orders].sort(byDate).map((o) => [o.date, name.get(o.client_id), o.amount, o.product_lines.map((p) => PRODUCT_LABEL[p]), o.source, o.qb_ref]),
         ),
       )
     case 'followups':

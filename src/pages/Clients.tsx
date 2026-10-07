@@ -6,18 +6,20 @@ import { Sheet } from '../components/Sheet'
 import { Button, Card, Chip, Pill } from '../components/ui'
 import { FREQUENCY_LABEL, PRODUCT_LABEL, PRODUCT_LINES, PRODUCT_SHORT, STATUS_LABEL, STATUS_STYLE } from '../lib/constants'
 import { daysAgo, relativeDay } from '../lib/dates'
+import { isNoOrderFlag } from '../lib/actions'
 import { useStore } from '../lib/store'
 import type { ProductLine, Status } from '../lib/types'
 
-const FILTERS: (Status | 'all')[] = ['all', 'active', 'at_risk', 'lead', 'inactive']
+type StatusFilter = Status | 'all' | 'no_order'
+const FILTERS: StatusFilter[] = ['all', 'no_order', 'active', 'at_risk', 'lead', 'inactive']
 type Contact = 'any' | '7' | '14' | '30' | 'never'
 const CONTACT_FILTERS: Contact[] = ['any', '7', '14', '30', 'never']
 const CONTACT_LABEL: Record<Contact, string> = { any: 'Any', '7': '7+ days', '14': '14+ days', '30': '30+ days', never: 'Never' }
-type Sort = 'name' | 'contact' | 'order'
-const SORT_LABEL: Record<Sort, string> = { name: 'Name', contact: 'Longest since contact', order: 'Longest since order' }
+type Sort = 'name' | 'contact'
+const SORT_LABEL: Record<Sort, string> = { name: 'Name', contact: 'Longest since contact' }
 
 /** Filters survive leaving and coming back to the list during this session. */
-const saved = { q: '', status: 'all' as Status | 'all', areas: [] as string[], products: [] as ProductLine[], contact: 'any' as Contact, sort: 'name' as Sort }
+const saved = { q: '', status: 'all' as StatusFilter, areas: [] as string[], products: [] as ProductLine[], contact: 'any' as Contact, sort: 'name' as Sort }
 
 export default function ClientsPage() {
   const { data, settings } = useStore()
@@ -36,12 +38,19 @@ export default function ClientsPage() {
     return m
   }, [data.interactions])
 
+  const flagged = useMemo(
+    () => new Set(data.followups.filter((f) => !f.done && f.client_id && isNoOrderFlag(f)).map((f) => f.client_id!)),
+    [data.followups],
+  )
+  const count = (f: StatusFilter) =>
+    f === 'all' ? data.clients.length : f === 'no_order' ? flagged.size : data.clients.filter((c) => c.status === f).length
+
   const extraFilters = (areas.length ? 1 : 0) + (products.length ? 1 : 0) + (contact !== 'any' ? 1 : 0) + (sort !== 'name' ? 1 : 0)
 
   const list = useMemo(() => {
     const needle = q.trim().toLowerCase()
     const out = data.clients
-      .filter((c) => status === 'all' || c.status === status)
+      .filter((c) => status === 'all' || (status === 'no_order' ? flagged.has(c.id) : c.status === status))
       .filter((c) => !areas.length || (c.area != null && areas.includes(c.area)))
       .filter((c) => products.every((p) => c.product_lines.includes(p)))
       .filter((c) => {
@@ -55,13 +64,12 @@ export default function ClientsPage() {
           !needle ||
           [c.business_name, c.contact_name, c.area, c.address, c.phone].some((v) => v?.toLowerCase().includes(needle)),
       )
-    // Oldest date first; never contacted / never ordered ('') sorts to the top.
+    // Oldest date first; never contacted ('') sorts to the top.
     return out.sort((a, b) => {
       if (sort === 'contact') return (lastContact.get(a.id) ?? '').localeCompare(lastContact.get(b.id) ?? '')
-      if (sort === 'order') return (a.last_order_date ?? '').localeCompare(b.last_order_date ?? '')
       return a.business_name.localeCompare(b.business_name)
     })
-  }, [data.clients, q, status, areas, products, contact, sort, lastContact])
+  }, [data.clients, q, status, areas, products, contact, sort, lastContact, flagged])
 
   return (
     <div className="pb-20">
@@ -91,7 +99,7 @@ export default function ClientsPage() {
       <div className="flex gap-2 overflow-x-auto py-3 -mx-4 px-4">
         {FILTERS.map((f) => (
           <Chip key={f} active={status === f} onClick={() => setStatus(f)}>
-            {f === 'all' ? 'All' : STATUS_LABEL[f]} ({f === 'all' ? data.clients.length : data.clients.filter((c) => c.status === f).length})
+            {f === 'all' ? 'All' : f === 'no_order' ? "Hasn't ordered" : STATUS_LABEL[f]} ({count(f)})
           </Chip>
         ))}
       </div>
@@ -103,12 +111,13 @@ export default function ClientsPage() {
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="font-bold text-base truncate">{c.business_name}</span>
                 <Pill className={STATUS_STYLE[c.status]}>{STATUS_LABEL[c.status]}</Pill>
+                {flagged.has(c.id) && <Pill className="bg-amber-100 text-amber-900">Hasn't ordered</Pill>}
               </div>
               <p className="text-sm text-slate-600 mt-0.5">
                 {[c.area, c.contact_name, c.order_frequency && FREQUENCY_LABEL[c.order_frequency]].filter(Boolean).join(' · ')}
               </p>
               <p className="text-xs text-slate-500 mt-1">
-                Last order: {relativeDay(c.last_order_date)} · Last contact: {relativeDay(lastContact.get(c.id))}
+                Last contact: {relativeDay(lastContact.get(c.id))}
               </p>
               {c.product_lines.length > 0 && (
                 <div className="flex gap-1 flex-wrap mt-2">
@@ -158,7 +167,7 @@ export default function ClientsPage() {
         <Label>Last contact</Label>
         <ChoiceChips options={CONTACT_FILTERS} value={contact} onChange={(v) => setContact(v ?? 'any')} labels={CONTACT_LABEL} />
         <Label>Sort by</Label>
-        <ChoiceChips options={['name', 'contact', 'order'] as Sort[]} value={sort} onChange={(v) => setSort(v ?? 'name')} labels={SORT_LABEL} />
+        <ChoiceChips options={['name', 'contact'] as Sort[]} value={sort} onChange={(v) => setSort(v ?? 'name')} labels={SORT_LABEL} />
         <div className="grid grid-cols-2 gap-2 mt-6">
           <Button
             variant="secondary"

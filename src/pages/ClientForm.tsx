@@ -97,27 +97,8 @@ export default function ClientForm() {
       <Label>How often they order</Label>
       <ChoiceChips options={FREQUENCIES} value={c.order_frequency} onChange={(v) => set('order_frequency', v)} labels={FREQUENCY_LABEL} allowNone />
 
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <Label>Typical order $</Label>
-          <AmountInput value={c.typical_order_size} onChange={(v) => set('typical_order_size', v)} />
-        </div>
-        <div>
-          <Label>Last order $</Label>
-          <AmountInput value={c.last_order_amount} onChange={(v) => set('last_order_amount', v)} />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <Label>Last order date</Label>
-          <TextInput type="date" value={c.last_order_date ?? ''} onChange={(e) => set('last_order_date', e.target.value || null)} />
-        </div>
-        <div>
-          <Label>Customer since</Label>
-          <TextInput type="date" value={c.account_start_date ?? ''} onChange={(e) => set('account_start_date', e.target.value || null)} />
-        </div>
-      </div>
+      <Label>Customer since</Label>
+      <TextInput type="date" value={c.account_start_date ?? ''} onChange={(e) => set('account_start_date', e.target.value || null)} />
       <p className="text-xs text-slate-500 mt-1">"Customer since" gives new accounts extra attention for their first 60 days.</p>
 
       <Label>Best way to reach them</Label>
@@ -128,6 +109,16 @@ export default function ClientForm() {
 
       {showMore ? (
         <>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label>Typical order $</Label>
+              <AmountInput value={c.typical_order_size} onChange={(v) => set('typical_order_size', v)} />
+            </div>
+            <div>
+              <Label>Last order date</Label>
+              <TextInput type="date" value={c.last_order_date ?? ''} onChange={(e) => set('last_order_date', e.target.value || null)} />
+            </div>
+          </div>
           <Label>QuickBooks customer name</Label>
           <TextInput value={c.qb_customer_name ?? ''} onChange={(e) => set('qb_customer_name', e.target.value || null)} placeholder="Exactly as in QuickBooks" />
           <p className="text-xs text-slate-500 mt-1">Used to match orders when importing from QuickBooks later.</p>

@@ -10,7 +10,7 @@ self.addEventListener('push', (event) => {
     self.registration.showNotification(d.title || 'Dua Sales', {
       body: d.body || '',
       icon: '/icon-192.png',
-      badge: '/icon-192.png',
+      badge: '/badge-96.png', // status-bar icon: transparent silhouette (Android paints it white)
       tag: d.tag || 'dua',
       renotify: true,
       data: { url: d.url || '/' },

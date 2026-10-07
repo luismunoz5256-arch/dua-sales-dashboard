@@ -15,7 +15,7 @@ import type { Settings } from '../lib/types'
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
 export default function SettingsPage() {
-  const { settings, saveSettings, mode, data, loadSampleData, clearSampleData } = useStore()
+  const { settings, saveSettings, mode, data, loadSampleData, clearSampleData, remove } = useStore()
   const [address, setAddress] = useState(settings.home_base.address)
   const sampleCount = data.clients.filter((c) => c.is_sample).length
 
@@ -126,6 +126,32 @@ export default function SettingsPage() {
           <Button variant="secondary" className="w-full" onClick={loadSampleData}>Load sample data</Button>
         )}
       </Card>
+      {data.clients.length > 0 && (
+        <Card className="p-4 space-y-3 mt-3">
+          <p className="text-sm text-slate-600">
+            <b>Start fresh</b> erases every client, lead, visit log, follow-up and saved prospect ({data.clients.length} clients now). Your settings,
+            areas and goals stay. Download a backup first if you might want anything back.
+          </p>
+          <div className="grid grid-cols-2 gap-2">
+            <Button variant="secondary" onClick={() => exportData('backup', data, settings)}>
+              Backup first
+            </Button>
+            <Button
+              variant="danger"
+              onClick={() => {
+                if (prompt('This erases ALL clients, leads and history. Type DELETE to confirm.')?.trim().toUpperCase() !== 'DELETE') return
+                // Deleting clients also removes their visits, follow-ups and week plans.
+                remove('clients', data.clients.map((c) => c.id))
+                remove('followups', data.followups.filter((f) => !f.client_id).map((f) => f.id))
+                remove('prospects', data.prospects.map((x) => x.id))
+                remove('day_status', data.day_status.map((x) => x.id))
+              }}
+            >
+              Start fresh
+            </Button>
+          </div>
+        </Card>
+      )}
 
       <SectionTitle>Your data</SectionTitle>
       <Card className="divide-y divide-slate-100">

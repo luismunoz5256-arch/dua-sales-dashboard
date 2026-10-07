@@ -8,6 +8,7 @@ import ClientForm from './pages/ClientForm'
 import ClientsPage from './pages/Clients'
 import FollowupsPage from './pages/Followups'
 import ImportPage from './pages/Import'
+import ScorePage from './pages/Score'
 import FindPage from './pages/Find'
 import GoalsPage from './pages/Goals'
 import LeadsPage from './pages/Leads'
@@ -33,6 +34,7 @@ export default function App() {
             <Route path="find" element={<FindPage />} />
             <Route path="followups" element={<FollowupsPage />} />
             <Route path="goals" element={<GoalsPage />} />
+            <Route path="score" element={<ScorePage />} />
             <Route path="settings" element={<SettingsPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>

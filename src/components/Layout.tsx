@@ -1,7 +1,8 @@
-import { ArrowLeft, CalendarDays, Home, Search, Settings, Target, Users, Sprout } from 'lucide-react'
+import { ArrowLeft, CalendarDays, Home, Search, Settings, Target, Trophy, Users, Sprout } from 'lucide-react'
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useBackgroundGeocoding } from '../lib/geocode'
 import { useStore } from '../lib/store'
+import { ScoreFx } from './ScoreFx'
 import { Button } from './ui'
 
 const TABS = [
@@ -20,6 +21,7 @@ const TITLES: Record<string, string> = {
   '/find': 'Find prospects',
   '/goals': 'Goals',
   '/settings': 'Settings',
+  '/score': 'Score',
 }
 
 function subPageTitle(path: string): string | null {
@@ -56,6 +58,9 @@ export function Layout() {
           )}
           <h1 className="text-lg font-bold flex-1 truncate">{title}</h1>
           {mode === 'demo' && <span className="text-[11px] font-semibold bg-white/20 rounded-full px-2 py-0.5">DEMO</span>}
+          <Link to="/score" aria-label="Score" className="w-11 h-11 grid place-items-center rounded-full active:bg-white/20">
+            <Trophy size={22} />
+          </Link>
           <Link to="/goals" aria-label="Goals" className="w-11 h-11 grid place-items-center rounded-full active:bg-white/20">
             <Target size={22} />
           </Link>
@@ -84,6 +89,8 @@ export function Layout() {
           <Outlet />
         )}
       </main>
+
+      <ScoreFx />
 
       <nav className="fixed bottom-0 inset-x-0 z-20 bg-white border-t border-slate-200 safe-bottom">
         <div className="max-w-2xl mx-auto grid grid-cols-5">

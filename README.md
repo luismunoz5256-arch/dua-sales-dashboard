@@ -46,3 +46,5 @@ Copy `.env.example` to `.env.local` and fill in the Supabase keys to develop aga
 5. Leads pipeline + Goals
 6. Prospect Finder (Google Places, cached)
 7. Polish — weights in settings, notifications, install
+
+**Game:** points for visits (10), calls (5), texts (3), sample drops (15), quotes (20), follow-ups done (5) and secured clients (100 / 200 / 350 by size: typical order × frequency). Points are computed from logged data (each action type once per client per day), so Undo removes them. Levels: Seedling → Sprout → Grower → Picker → Market Runner → Route Pro → … → Route Legend. See `src/lib/score.ts`.

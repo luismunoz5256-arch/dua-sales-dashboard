@@ -2,6 +2,7 @@ import { CheckCircle2, ChevronDown, ChevronRight, Info, MessageSquare, Navigatio
 import { useMemo, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { FollowupRow } from '../components/FollowupRow'
+import { LevelBar } from '../components/ScoreFx'
 import { QuickLog } from '../components/QuickLog'
 import { useToast } from '../components/Toast'
 import { Button, Card, Pill, SectionTitle } from '../components/ui'
@@ -96,6 +97,10 @@ export default function TodayPage() {
         <Link to="/settings#ranking" className="text-xs font-semibold text-slate-500 flex items-center gap-1 h-9 px-2 rounded-lg active:bg-slate-200">
           <Info size={14} /> How it's ranked
         </Link>
+      </div>
+
+      <div className="mt-2">
+        <LevelBar />
       </div>
 
       <div className="grid grid-cols-4 gap-1.5 mt-2">

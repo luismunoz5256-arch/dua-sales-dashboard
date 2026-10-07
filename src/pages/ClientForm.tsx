@@ -7,6 +7,8 @@ import { blankClient, useActions } from '../lib/actions'
 import {
   CONTACT_LABEL, FREQUENCIES, FREQUENCY_LABEL, LEAD_STAGE_LABEL, PRODUCT_LABEL, PRODUCT_LINES, STATUS_LABEL,
 } from '../lib/constants'
+import { today } from '../lib/dates'
+import { clientSize, SIZE_LABEL, WIN_POINTS } from '../lib/score'
 import { useStore } from '../lib/store'
 import type { Client, ContactMethod, LeadStage, Status } from '../lib/types'
 
@@ -34,13 +36,18 @@ export default function ClientForm() {
     c.business_name.trim() !== '' &&
     data.clients.some((x) => x.business_name.trim().toLowerCase() === c.business_name.trim().toLowerCase())
 
+  const size = clientSize(c)
+  // A lead switched to an active account counts as secured today (for points), unless you set a date.
+  const securedNow = existing?.status === 'lead' && (c.status === 'active' || c.status === 'at_risk') && !c.account_start_date
+
   function save() {
     const name = c.business_name.trim()
     if (!name) return
     const next: Client = {
       ...c,
+      ...(securedNow ? { account_start_date: today(), lead_stage: 'won' as const } : {}),
       business_name: name,
-      lead_stage: c.status === 'lead' ? c.lead_stage ?? 'new' : c.lead_stage === 'won' ? 'won' : null,
+      lead_stage: c.status === 'lead' ? c.lead_stage ?? 'new' : securedNow || c.lead_stage === 'won' ? 'won' : null,
       // Address changed: drop old coordinates (they'll be looked up again from the new address).
       ...(existing && existing.address !== c.address ? { lat: null, lng: null } : {}),
     }
@@ -97,9 +104,21 @@ export default function ClientForm() {
       <Label>How often they order</Label>
       <ChoiceChips options={FREQUENCIES} value={c.order_frequency} onChange={(v) => set('order_frequency', v)} labels={FREQUENCY_LABEL} allowNone />
 
+      <Label>Typical order $</Label>
+      <AmountInput value={c.typical_order_size} onChange={(v) => set('typical_order_size', v)} />
+      <p className="text-xs text-slate-500 mt-1">
+        {size === 'unknown'
+          ? 'Fill in with how often they order to set the client size (bigger clients earn more points).'
+          : `${SIZE_LABEL[size]} client: worth +${WIN_POINTS[size]} pts when secured.`}
+      </p>
+
       <Label>Customer since</Label>
       <TextInput type="date" value={c.account_start_date ?? ''} onChange={(e) => set('account_start_date', e.target.value || null)} />
-      <p className="text-xs text-slate-500 mt-1">"Customer since" gives new accounts extra attention for their first 60 days.</p>
+      <p className="text-xs text-slate-500 mt-1">
+        {securedNow
+          ? `Saving makes this lead an account secured today (+${WIN_POINTS[size]} pts).`
+          : '"Customer since" gives new accounts extra attention for 60 days and counts as a secured client for points.'}
+      </p>
 
       <Label>Best way to reach them</Label>
       <ChoiceChips options={CONTACTS} value={c.preferred_contact} onChange={(v) => set('preferred_contact', v)} labels={CONTACT_LABEL} allowNone />
@@ -109,16 +128,8 @@ export default function ClientForm() {
 
       {showMore ? (
         <>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label>Typical order $</Label>
-              <AmountInput value={c.typical_order_size} onChange={(v) => set('typical_order_size', v)} />
-            </div>
-            <div>
-              <Label>Last order date</Label>
-              <TextInput type="date" value={c.last_order_date ?? ''} onChange={(e) => set('last_order_date', e.target.value || null)} />
-            </div>
-          </div>
+          <Label>Last order date</Label>
+          <TextInput type="date" value={c.last_order_date ?? ''} onChange={(e) => set('last_order_date', e.target.value || null)} />
           <Label>QuickBooks customer name</Label>
           <TextInput value={c.qb_customer_name ?? ''} onChange={(e) => set('qb_customer_name', e.target.value || null)} placeholder="Exactly as in QuickBooks" />
           <p className="text-xs text-slate-500 mt-1">Used to match orders when importing from QuickBooks later.</p>

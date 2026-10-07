@@ -18,3 +18,14 @@ body {
 .pb-nav { padding-bottom: calc(5rem + env(safe-area-inset-bottom)); }
 .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
 .safe-top { padding-top: env(safe-area-inset-top); }
+
+@keyframes float-up {
+  0% { opacity: 0; transform: translateY(12px) scale(0.8); }
+  15% { opacity: 1; transform: translateY(0) scale(1.1); }
+  30% { transform: scale(1); }
+  100% { opacity: 0; transform: translateY(-40px); }
+}
+@keyframes pop {
+  0% { opacity: 0; transform: scale(0.7); }
+  100% { opacity: 1; transform: scale(1); }
+}

@@ -1,6 +1,6 @@
 import { FileUp, Phone, Plus, Search, SlidersHorizontal } from 'lucide-react'
-import { useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useEffect, useMemo, useState } from 'react'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { ChoiceChips, Label, MultiChips } from '../components/fields'
 import { Sheet } from '../components/Sheet'
 import { Button, Card, Chip, Pill } from '../components/ui'
@@ -23,6 +23,14 @@ const saved = { q: '', status: 'all' as StatusFilter, areas: [] as string[], pro
 
 export default function ClientsPage() {
   const { data, settings } = useStore()
+  const [params] = useSearchParams()
+  const navigate = useNavigate()
+  // Opened from a Today tile (e.g. /clients?status=lead): start from a clean list with just that filter.
+  const linked = params.get('status') as StatusFilter | null
+  if (linked && FILTERS.includes(linked)) Object.assign(saved, { q: '', status: linked, areas: [], products: [], contact: 'any', sort: 'name' })
+  useEffect(() => {
+    if (linked) navigate('/clients', { replace: true })
+  }, [linked, navigate])
   const [q, setQ] = useState(saved.q)
   const [status, setStatus] = useState(saved.status)
   const [areas, setAreas] = useState(saved.areas)

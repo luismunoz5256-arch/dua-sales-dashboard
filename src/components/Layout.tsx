@@ -22,6 +22,7 @@ const TITLES: Record<string, string> = {
 }
 
 function subPageTitle(path: string): string | null {
+  if (path === '/followups') return 'Follow-ups'
   if (path === '/clients/new') return 'New client'
   if (path === '/clients/import') return 'Bulk add clients'
   if (/^\/clients\/[^/]+\/edit$/.test(path)) return 'Edit client'

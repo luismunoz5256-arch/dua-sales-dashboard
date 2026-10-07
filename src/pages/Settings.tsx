@@ -4,6 +4,8 @@ import { Link, useLocation } from 'react-router-dom'
 import { Button, Card, SectionTitle } from '../components/ui'
 import { supabase } from '../lib/backend'
 import { exportData } from '../lib/exporters'
+import { placesStatus } from '../lib/placesApi'
+import { DEFAULT_FIT_WEIGHTS, FIT_LABEL, type FitWeights } from '../lib/prospects'
 import { DEFAULT_SETTINGS } from '../lib/constants'
 import { RULE_LABEL, type RuleKey } from '../lib/priority'
 import { useStore } from '../lib/store'
@@ -90,6 +92,8 @@ export default function SettingsPage() {
       </p>
 
       <RankingSettings settings={settings} save={saveSettings} />
+
+      <FinderSettings settings={settings} save={saveSettings} />
 
       <SectionTitle>Areas</SectionTitle>
       <Card className="p-4">
@@ -232,5 +236,59 @@ function Stepper({ label, value, step, onChange }: { label: string; value: numbe
         <Plus size={18} />
       </button>
     </div>
+  )
+}
+
+/** Prospect Finder: Google key status, today's usage, fit weights and extra chain names. */
+function FinderSettings({ settings, save }: { settings: Settings; save: (s: Settings) => void }) {
+  const [status, setStatus] = useState<Awaited<ReturnType<typeof placesStatus>> | null>(null)
+  const [chains, setChains] = useState((settings.extra_chains ?? []).join(', '))
+  useEffect(() => {
+    placesStatus().then(setStatus)
+  }, [])
+  const w = { ...DEFAULT_FIT_WEIGHTS, ...settings.fit_weights }
+  const setW = (k: keyof FitWeights, v: number) => save({ ...settings, fit_weights: { ...w, [k]: Math.max(0, Math.min(3, v)) } })
+  return (
+    <>
+      <div id="finder" className="scroll-mt-16" />
+      <SectionTitle>Prospect Finder</SectionTitle>
+      <Card className="p-4 text-sm space-y-1">
+        {status == null ? (
+          <p className="text-slate-500">Checking Google connection…</p>
+        ) : status.configured ? (
+          <p>
+            ✓ <b>Google search connected.</b> {status.usedToday ?? 0} of {status.limit} searches used today. Repeat searches come from the
+            30-day cache and are free.
+          </p>
+        ) : (
+          <p>
+            <b>Using sample results.</b> {status.reason}. Add your Google key in Vercel to search real El Paso businesses (see the setup
+            steps in the README).
+          </p>
+        )}
+        <p className="text-xs text-slate-500">Google gives 1,000 searches a month free; this app stops at {status?.limit ?? 60} a day.</p>
+      </Card>
+      <p className="text-xs font-bold uppercase tracking-wide text-slate-500 mt-4 mb-2 px-1">Fit score weights (×)</p>
+      <Card className="divide-y divide-slate-100">
+        {(Object.keys(FIT_LABEL) as (keyof FitWeights)[]).map((k) => (
+          <Stepper key={k} label={FIT_LABEL[k]} value={w[k]} step={0.5} onChange={(v) => setW(k, v)} />
+        ))}
+      </Card>
+      <p className="text-xs font-bold uppercase tracking-wide text-slate-500 mt-4 mb-2 px-1">Also treat as chains</p>
+      <Card className="p-3">
+        <textarea
+          value={chains}
+          onChange={(e) => setChains(e.target.value)}
+          onBlur={() => save({ ...settings, extra_chains: chains.split(',').map((x) => x.trim()).filter(Boolean) })}
+          rows={2}
+          placeholder="e.g. Kiki's, Carlos and Mickey's"
+          className="w-full px-3 py-2 rounded-xl border border-slate-300 text-base"
+        />
+        <p className="text-xs text-slate-500 mt-1">Comma separated. 70+ national chains are already flagged.</p>
+      </Card>
+      <button onClick={() => save({ ...settings, fit_weights: DEFAULT_FIT_WEIGHTS })} className="mt-2 px-1 text-sm font-semibold text-slate-500 underline">
+        Reset fit weights
+      </button>
+    </>
   )
 }

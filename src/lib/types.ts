@@ -127,6 +127,9 @@ export interface Settings {
   goals?: Partial<Record<'new_accounts_month' | 'visits_week' | 'leads_week' | 'multi_line_clients', number>>
   /** Day goals were first set; bonuses only count from the period containing this day. */
   goals_since?: string
+  /** Prospect Finder: fit score weights (multipliers, default 1) and extra chain names to flag. */
+  fit_weights?: Partial<Record<'type' | 'independent' | 'busy' | 'near' | 'menu' | 'fresh' | 'open', number>>
+  extra_chains?: string[]
 }
 
 export interface DataSet {

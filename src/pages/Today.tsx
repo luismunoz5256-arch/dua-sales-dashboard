@@ -176,6 +176,12 @@ export default function TodayPage() {
               )}
             </p>
           )}
+          <Link
+            to="/find?near=route"
+            className="mt-3 h-12 rounded-xl border border-dashed border-orange-300 bg-orange-50 text-orange-800 font-semibold text-sm flex items-center justify-center gap-2 active:bg-orange-100"
+          >
+            🔎 Find new prospects near today's route
+          </Link>
           {nearby.length > 0 && (
             <Collapsible title={`If you have time, nearby (${nearby.length})`}>
               <div className="space-y-2">

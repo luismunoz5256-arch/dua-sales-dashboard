@@ -27,6 +27,25 @@ With no Supabase keys set, the app runs in **demo mode**: no login, sample data,
 ### 3. Put it on your Android home screen
 Open the URL in Chrome → sign in → menu **⋮ → Add to Home screen / Install app**.
 
+### 4. Google key for the Prospect Finder (optional, ~10 minutes)
+Without a key the Find screen shows sample businesses. With one, it searches real El Paso businesses.
+
+**Cost:** each search is one "Text Search Enterprise + Atmosphere" request: $40 per 1,000, with the **first 1,000 each month free**.
+About 200 searches a month comes to $0. The app also caches every search for 30 days (repeats are free) and stops at 60 searches a day.
+
+1. Go to https://console.cloud.google.com, sign in, and **create a project** (e.g. "Dua Sales").
+2. **Billing**: link a billing account (a card is required even for the free tier).
+3. **APIs & Services → Library**: search **"Places API (New)"** and click **Enable**.
+4. **APIs & Services → Credentials → Create credentials → API key**. Open the key, then under **API restrictions** choose **Restrict key → Places API (New)**. Save.
+5. Safety nets:
+   - **APIs & Services → Places API (New) → Quotas**: set **Text Search requests per day** to **60**.
+   - **Billing → Budgets & alerts**: create a **$1** budget with email alerts.
+6. **Vercel → your project → Settings → Environment Variables**: add `GOOGLE_PLACES_API_KEY` = your key (optional: `DAILY_SEARCH_LIMIT`, default 60). Then **Deployments → ⋯ → Redeploy**.
+7. In the app, **Settings → Prospect Finder** should say "Google search connected".
+
+The key lives only on the server (`api/places.ts`). The phone never sees it, and only your signed-in account can use it.
+Social links are tap-to-open searches; nothing is scraped.
+
 ## Development
 ```bash
 npm install
@@ -44,7 +63,7 @@ Copy `.env.example` to `.env.local` and fill in the Supabase keys to develop aga
 3. ✅ TODAY — priority ranking with "why", follow-ups, upsells, leads, Maps routes
 4. ✅ Week plan — suggested plan, warehouse days, tap to move / add / remove
 5. ✅ Leads pipeline + Goals
-6. Prospect Finder (Google Places, cached)
+6. ✅ Prospect Finder (Google Places, cached)
 7. Polish — weights in settings, notifications, install
 
 **Game:** points for visits (10), calls (5), texts (3), sample drops (15), quotes (20), follow-ups done (5) and secured clients (100 / 200 / 350 by size: typical order × frequency). Points are computed from logged data (each action type once per client per day), so Undo removes them. Levels: Seedling → Sprout → Grower → Picker → Market Runner → Route Pro → … → Route Legend. See `src/lib/score.ts`.

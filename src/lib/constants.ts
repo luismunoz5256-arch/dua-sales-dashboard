@@ -88,7 +88,7 @@ export const DEFAULT_AREAS = [
 ]
 
 export const DEFAULT_SETTINGS: Settings = {
-  // Coordinates are approximate until we geocode the address in a later step.
+  // Approximate until the address is looked up (see lib/geocode.ts).
   home_base: { label: 'Home', address: '840 N Hawkins Blvd, El Paso, TX 79915', lat: 31.7793, lng: -106.3838 },
   areas: DEFAULT_AREAS,
   visits_per_day: 6,
@@ -99,11 +99,12 @@ export const DEFAULT_SETTINGS: Settings = {
     lead_no_contact_days: 7,
     new_account_days: 60,
     weights: {
-      overdue_order: 3,
-      no_contact: 2,
+      no_order: 3,
       followup_due: 3,
+      at_risk: 2,
+      no_contact: 2,
       new_account: 2,
-      upsell_gap: 1,
+      upsell_gap: 0.5,
       stale_lead: 1.5,
     },
   },

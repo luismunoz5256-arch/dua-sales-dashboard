@@ -148,6 +148,14 @@ export function useActions() {
     [upsert],
   )
 
+  const snoozeFollowup = useCallback(
+    (f: Followup, until: DateStr) => {
+      upsert('followups', { ...f, due_date: until })
+      return () => upsert('followups', f)
+    },
+    [upsert],
+  )
+
   /** Flag "hasn't ordered": one open follow-up per client; flagging again just moves its due date. */
   const flagNoOrder = useCallback(
     (client: Client, due: DateStr, note: string, existing: Followup | null) => {
@@ -163,7 +171,7 @@ export function useActions() {
 
   const saveClient = useCallback((c: Client) => upsert('clients', { ...c, updated_at: nowIso() }), [upsert])
 
-  return { logInteraction, updateInteraction, deleteInteraction, addFollowup, setFollowupDone, flagNoOrder, saveClient }
+  return { logInteraction, updateInteraction, deleteInteraction, addFollowup, setFollowupDone, snoozeFollowup, flagNoOrder, saveClient }
 }
 
 export { isNoOrderFlag, NO_ORDER_PREFIX, NO_ORDER_TASK } from './constants'

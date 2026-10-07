@@ -26,6 +26,8 @@ export function QuickLog({ client, size = 'md' }: { client: Client; size?: 'sm' 
   const toast = useToast()
   const [sheet, setSheet] = useState<null | 'no_order' | 'full' | Interaction>(null)
   const h = size === 'sm' ? 'h-12' : 'h-14'
+  // Leads haven't ordered yet, so "No order" doesn't apply to them.
+  const isLead = client.status === 'lead'
 
   function oneTap(type: InteractionType) {
     const { interaction, undo } = logInteraction(client, type)
@@ -37,7 +39,7 @@ export function QuickLog({ client, size = 'md' }: { client: Client; size?: 'sm' 
 
   return (
     <>
-      <div className="grid grid-cols-5 gap-1.5">
+      <div className={`grid gap-1.5 ${isLead ? 'grid-cols-4' : 'grid-cols-5'}`}>
         {ONE_TAP.map(({ type, label, icon: Icon }) => (
           <button
             key={type}
@@ -48,13 +50,15 @@ export function QuickLog({ client, size = 'md' }: { client: Client; size?: 'sm' 
             {label}
           </button>
         ))}
-        <button
-          onClick={() => setSheet('no_order')}
-          className={`${h} rounded-xl bg-amber-100 active:bg-amber-200 flex flex-col items-center justify-center text-[11px] font-semibold text-amber-900`}
-        >
-          <PackageX size={20} />
-          No order
-        </button>
+        {!isLead && (
+          <button
+            onClick={() => setSheet('no_order')}
+            className={`${h} rounded-xl bg-amber-100 active:bg-amber-200 flex flex-col items-center justify-center text-[11px] font-semibold text-amber-900`}
+          >
+            <PackageX size={20} />
+            No order
+          </button>
+        )}
         <button
           onClick={() => setSheet('full')}
           aria-label="More log options"

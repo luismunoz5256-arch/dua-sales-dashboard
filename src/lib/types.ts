@@ -97,8 +97,19 @@ export interface Prospect {
   updated_at: string
 }
 
+export interface PriorityWeights {
+  no_order: number
+  followup_due: number
+  at_risk: number
+  no_contact: number
+  new_account: number
+  upsell_gap: number
+  stale_lead: number
+}
+
 export interface Settings {
-  home_base: { label: string; address: string; lat: number; lng: number }
+  /** lat/lng are looked up from the address; geocoded_for is the address they belong to. */
+  home_base: { label: string; address: string; lat: number | null; lng: number | null; geocoded_for?: string }
   areas: string[]
   visits_per_day: number
   /** 0 = Sunday … 6 = Saturday */
@@ -109,14 +120,7 @@ export interface Settings {
     no_contact_days: number
     lead_no_contact_days: number
     new_account_days: number
-    weights: {
-      overdue_order: number
-      no_contact: number
-      followup_due: number
-      new_account: number
-      upsell_gap: number
-      stale_lead: number
-    }
+    weights: PriorityWeights
   }
   pitch_language: 'en' | 'es' | 'both'
 }

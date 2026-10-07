@@ -1,10 +1,13 @@
 import { Download, FileUp, Minus, Plus } from 'lucide-react'
-import { Link } from 'react-router-dom'
-import { useState, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
+import { Link, useLocation } from 'react-router-dom'
 import { Button, Card, SectionTitle } from '../components/ui'
 import { supabase } from '../lib/backend'
 import { exportData } from '../lib/exporters'
+import { DEFAULT_SETTINGS } from '../lib/constants'
+import { RULE_LABEL, type RuleKey } from '../lib/priority'
 import { useStore } from '../lib/store'
+import type { Settings } from '../lib/types'
 
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
@@ -12,6 +15,11 @@ export default function SettingsPage() {
   const { settings, saveSettings, mode, data, loadSampleData, clearSampleData } = useStore()
   const [address, setAddress] = useState(settings.home_base.address)
   const sampleCount = data.clients.filter((c) => c.is_sample).length
+
+  const { hash } = useLocation()
+  useEffect(() => {
+    if (hash) document.getElementById(hash.slice(1))?.scrollIntoView({ block: 'start' })
+  }, [hash])
 
   const toggle = (list: number[], d: number) => (list.includes(d) ? list.filter((x) => x !== d) : [...list, d].sort())
 
@@ -46,7 +54,12 @@ export default function SettingsPage() {
             Save address
           </Button>
         )}
-        <p className="text-xs text-slate-500">Used as the start of your route and for "distance from home" searches.</p>
+        <p className="text-xs text-slate-500">
+          Start of your daily route.{' '}
+          {settings.home_base.geocoded_for === settings.home_base.address
+            ? '✓ Found on the map.'
+            : 'Looking it up on the map… (if this stays, check the address)'}
+        </p>
       </Card>
 
       <SectionTitle>Visits per field day</SectionTitle>
@@ -75,6 +88,8 @@ export default function SettingsPage() {
       <p className="text-xs text-slate-500 mt-2 px-1">
         No visits get planned on these days. You can also flip any single day in the Week plan.
       </p>
+
+      <RankingSettings settings={settings} save={saveSettings} />
 
       <SectionTitle>Areas</SectionTitle>
       <Card className="p-4">
@@ -137,7 +152,7 @@ export default function SettingsPage() {
       )}
 
       <p className="text-xs text-slate-400 text-center mt-8">
-        Priority weights and notifications arrive in later steps.
+        Notifications arrive in a later step.
       </p>
     </div>
   )
@@ -169,5 +184,53 @@ function StepButton({ label, onClick, children }: { label: string; onClick: () =
     >
       {children}
     </button>
+  )
+}
+
+const WEIGHT_ORDER: RuleKey[] = ['followup_due', 'no_order', 'at_risk', 'no_contact', 'new_account', 'stale_lead', 'upsell_gap']
+
+/** Thresholds and weights for the "Visit today" ranking. Each rule adds weight x strength to a client's score. */
+function RankingSettings({ settings, save }: { settings: Settings; save: (s: Settings) => void }) {
+  const p = settings.priority
+  const setP = (patch: Partial<Settings['priority']>) => save({ ...settings, priority: { ...p, ...patch } })
+  const setW = (k: RuleKey, v: number) => setP({ weights: { ...p.weights, [k]: Math.max(0, Math.min(5, v)) } })
+  return (
+    <>
+      <div id="ranking" className="scroll-mt-16" />
+      <SectionTitle>How "Visit today" is ranked</SectionTitle>
+      <Card className="p-4 text-sm text-slate-600 space-y-1">
+        <p>Each client gets points from the rules below. Highest score first; the top {settings.visits_per_day} make today's visit list, grouped by area. Tap “Why” on a card to see its points.</p>
+        <p>Set a rule to 0 to turn it off.</p>
+      </Card>
+      <Card className="divide-y divide-slate-100 mt-2">
+        {WEIGHT_ORDER.map((k) => (
+          <Stepper key={k} label={RULE_LABEL[k]} value={p.weights[k]} step={0.5} onChange={(v) => setW(k, v)} />
+        ))}
+      </Card>
+      <p className="text-xs font-bold uppercase tracking-wide text-slate-500 mt-4 mb-2 px-1">Thresholds</p>
+      <Card className="divide-y divide-slate-100">
+        <Stepper label="Client: no contact after (days)" value={p.no_contact_days} step={1} onChange={(v) => setP({ no_contact_days: Math.max(1, v) })} />
+        <Stepper label="Lead: no contact after (days)" value={p.lead_no_contact_days} step={1} onChange={(v) => setP({ lead_no_contact_days: Math.max(1, v) })} />
+        <Stepper label="New account period (days)" value={p.new_account_days} step={5} onChange={(v) => setP({ new_account_days: Math.max(5, v) })} />
+      </Card>
+      <button onClick={() => setP(DEFAULT_SETTINGS.priority)} className="mt-2 px-1 text-sm font-semibold text-slate-500 underline">
+        Reset ranking to defaults
+      </button>
+    </>
+  )
+}
+
+function Stepper({ label, value, step, onChange }: { label: string; value: number; step: number; onChange: (v: number) => void }) {
+  return (
+    <div className="flex items-center gap-2 px-3 py-2">
+      <span className="flex-1 text-sm font-medium">{label}</span>
+      <button aria-label={`Less: ${label}`} onClick={() => onChange(value - step)} className="w-11 h-11 rounded-lg border border-slate-300 grid place-items-center active:bg-slate-100">
+        <Minus size={18} />
+      </button>
+      <span className="w-10 text-center font-bold">{value}</span>
+      <button aria-label={`More: ${label}`} onClick={() => onChange(value + step)} className="w-11 h-11 rounded-lg border border-slate-300 grid place-items-center active:bg-slate-100">
+        <Plus size={18} />
+      </button>
+    </div>
   )
 }

@@ -1,5 +1,6 @@
 import { ArrowLeft, CalendarDays, Home, Search, Settings, Target, Users, Sprout } from 'lucide-react'
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { useBackgroundGeocoding } from '../lib/geocode'
 import { useStore } from '../lib/store'
 import { Button } from './ui'
 
@@ -33,6 +34,7 @@ function subPageTitle(path: string): string | null {
 export function Layout() {
   const { ready, loadError, saveError, dismissSaveError, reload, mode } = useStore()
   const { pathname } = useLocation()
+  useBackgroundGeocoding()
   const navigate = useNavigate()
   const sub = subPageTitle(pathname)
   const title = sub ?? TITLES[pathname] ?? 'Dua Sales'

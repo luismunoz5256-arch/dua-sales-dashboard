@@ -41,7 +41,7 @@ Copy `.env.example` to `.env.local` and fill in the Supabase keys to develop aga
 ## Build steps
 1. ✅ Foundation — app shell, login, database schema, sample data, settings (work / warehouse days)
 2. ✅ Clients — detail, quick-log, add/edit, CSV paste/import, CSV export
-3. TODAY — priority ranking with "why", follow-ups, upsells, leads, Maps routes
+3. ✅ TODAY — priority ranking with "why", follow-ups, upsells, leads, Maps routes
 4. Week plan — suggested plan, warehouse days, drag to adjust
 5. Leads pipeline + Goals
 6. Prospect Finder (Google Places, cached)

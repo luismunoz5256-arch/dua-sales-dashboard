@@ -1,6 +1,6 @@
-import { addDays, parseDate, toDateStr } from './dates'
-import { dayKind, pickDayPlan, rankClients, type Ranked } from './priority'
-import type { DataSet, DateStr, DayKind, Settings } from './types'
+import { addDays, parseDate, toDateStr } from './dates.js'
+import { dayKind, pickDayPlan, rankClients, type Ranked } from './priority.js'
+import type { DataSet, DateStr, DayKind, Settings } from './types.js'
 
 /**
  * Rank "as of this morning" (ignoring what was logged today), so today's plan stays put

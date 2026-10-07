@@ -14,10 +14,10 @@ process.env.TZ = 'America/Denver' // El Paso time, so "today" is right
 
 import { createClient } from '@supabase/supabase-js'
 import webpush from 'web-push'
-import { withDefaults } from '../src/lib/settings'
-import { today } from '../src/lib/dates'
-import { middayMessage, morningMessage, type PushMessage } from '../src/lib/notifyText'
-import type { DataSet, Settings } from '../src/lib/types'
+import { withDefaults } from '../src/lib/settings.js'
+import { today } from '../src/lib/dates.js'
+import { middayMessage, morningMessage, type PushMessage } from '../src/lib/notifyText.js'
+import type { DataSet, Settings } from '../src/lib/types.js'
 
 const TABLES = ['clients', 'interactions', 'followups', 'week_plan', 'day_status'] as const
 

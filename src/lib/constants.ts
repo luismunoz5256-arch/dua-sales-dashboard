@@ -1,4 +1,4 @@
-import type { ContactMethod, Frequency, InteractionType, LeadStage, ProductLine, Settings, Status } from './types'
+import type { ContactMethod, Frequency, InteractionType, LeadStage, ProductLine, Settings, Status } from './types.js'
 
 export const STATUS_LABEL: Record<Status, string> = {
   lead: 'Lead',

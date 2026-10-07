@@ -1,8 +1,8 @@
-import { isNoOrderFlag } from './constants'
-import { planDays, weekDates } from './plan'
-import { dayKind } from './priority'
-import { planRoute } from './route'
-import type { DataSet, DateStr, Settings } from './types'
+import { isNoOrderFlag } from './constants.js'
+import { planDays, weekDates } from './plan.js'
+import { dayKind } from './priority.js'
+import { planRoute } from './route.js'
+import type { DataSet, DateStr, Settings } from './types.js'
 
 export interface PushMessage {
   title: string

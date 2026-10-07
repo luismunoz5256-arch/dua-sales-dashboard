@@ -1,5 +1,5 @@
-import { DEFAULT_SETTINGS } from './constants'
-import type { Settings } from './types'
+import { DEFAULT_SETTINGS } from './constants.js'
+import type { Settings } from './types.js'
 
 /** Merge saved settings over defaults so newly added settings always have a value. */
 export function withDefaults(saved: Partial<Settings> | null | undefined): Settings {

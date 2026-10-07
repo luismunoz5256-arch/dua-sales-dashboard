@@ -1,4 +1,4 @@
-import type { Client, ProductLine } from './types'
+import type { Client, ProductLine } from './types.js'
 
 const MAIN: ProductLine[] = ['produce', 'prepped_veg', 'cold_pressed', 'commercial_juice']
 

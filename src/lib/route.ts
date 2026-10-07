@@ -1,4 +1,4 @@
-import type { Client } from './types'
+import type { Client } from './types.js'
 
 export interface Point {
   lat: number

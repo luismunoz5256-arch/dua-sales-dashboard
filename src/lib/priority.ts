@@ -1,8 +1,8 @@
-import { isNoOrderFlag, PRODUCT_LABEL } from './constants'
-import { daysBetween } from './dates'
-import { suggestUpsell } from './pitch'
-import { miles } from './route'
-import type { Client, DataSet, DateStr, Followup, PriorityWeights, Settings } from './types'
+import { isNoOrderFlag, PRODUCT_LABEL } from './constants.js'
+import { daysBetween } from './dates.js'
+import { suggestUpsell } from './pitch.js'
+import { miles } from './route.js'
+import type { Client, DataSet, DateStr, Followup, PriorityWeights, Settings } from './types.js'
 
 export type RuleKey = keyof PriorityWeights
 

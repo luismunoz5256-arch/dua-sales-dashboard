@@ -22,12 +22,15 @@ import type { DataSet, Settings } from '../src/lib/types'
 const TABLES = ['clients', 'interactions', 'followups', 'week_plan', 'day_status'] as const
 
 export default async function handler(req: any, res: any) {
-  const url = process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL
-  const anon = process.env.SUPABASE_ANON_KEY ?? process.env.VITE_SUPABASE_ANON_KEY
-  const service = process.env.SUPABASE_SERVICE_ROLE_KEY
-  const pub = process.env.VAPID_PUBLIC_KEY ?? process.env.VITE_VAPID_PUBLIC_KEY
-  const priv = process.env.VAPID_PRIVATE_KEY
-  const missing = Object.entries({ VITE_SUPABASE_URL: url, SUPABASE_SERVICE_ROLE_KEY: service, VAPID_PUBLIC_KEY: pub, VAPID_PRIVATE_KEY: priv, CRON_SECRET: process.env.CRON_SECRET })
+  // Trim: values pasted on a phone often pick up a stray space or line break.
+  const env = (...names: string[]) => names.map((n) => process.env[n]?.trim()).find(Boolean)
+  const url = env('SUPABASE_URL', 'VITE_SUPABASE_URL')
+  const anon = env('SUPABASE_ANON_KEY', 'VITE_SUPABASE_ANON_KEY')
+  const service = env('SUPABASE_SERVICE_ROLE_KEY')
+  const pub = env('VAPID_PUBLIC_KEY', 'VITE_VAPID_PUBLIC_KEY')
+  const priv = env('VAPID_PRIVATE_KEY')
+  const cronSecret = env('CRON_SECRET')
+  const missing = Object.entries({ VITE_SUPABASE_URL: url, SUPABASE_SERVICE_ROLE_KEY: service, VAPID_PUBLIC_KEY: pub, VAPID_PRIVATE_KEY: priv, CRON_SECRET: cronSecret })
     .filter(([, v]) => !v)
     .map(([k]) => k)
   // The public key is meant to be public: the app asks for it when turning notifications on.
@@ -35,7 +38,7 @@ export default async function handler(req: any, res: any) {
   if (missing.length) return res.status(501).json({ error: 'not_configured', missing })
 
   const auth = String(req.headers.authorization ?? '')
-  const isCron = auth === `Bearer ${process.env.CRON_SECRET}`
+  const isCron = auth === `Bearer ${cronSecret}`
   let isUser = false
   if (!isCron && anon) {
     const who = await fetch(`${url}/auth/v1/user`, { headers: { apikey: anon, Authorization: auth } })

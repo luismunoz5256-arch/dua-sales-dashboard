@@ -5,7 +5,7 @@ import { Button, Card, SectionTitle } from '../components/ui'
 import { supabase } from '../lib/backend'
 import { exportData } from '../lib/exporters'
 import { placesStatus } from '../lib/placesApi'
-import { disablePush, enablePush, pushState, sendTestPush, type PushState } from '../lib/push'
+import { disablePush, enablePush, pushMissing, pushState, sendTestPush, type PushState } from '../lib/push'
 import { DEFAULT_FIT_WEIGHTS, FIT_LABEL, type FitWeights } from '../lib/prospects'
 import { DEFAULT_SETTINGS } from '../lib/constants'
 import { RULE_LABEL, type RuleKey } from '../lib/priority'
@@ -334,7 +334,14 @@ function AppSettings({ settings, save }: { settings: Settings; save: (s: Setting
       <Card className="p-4 space-y-3">
         {push === 'unsupported' && <p className="text-sm">This browser can't show notifications. Use Chrome on Android, ideally with the app installed.</p>}
         {push === 'not_configured' && (
-          <p className="text-sm">Notifications aren't set up on the server yet (push keys missing). See "Notifications" in the README.</p>
+          <p className="text-sm">
+            Notifications aren't set up on the server yet.{' '}
+            {!supabase
+              ? 'Notifications need the online database (they are off in demo mode).'
+              : pushMissing.length
+              ? <>Missing in Vercel: <b>{pushMissing.join(', ')}</b>. Add them (Production), then redeploy.</>
+              : 'The server did not answer. Check that the latest Vercel deployment is Ready.'}
+          </p>
         )}
         {push === 'denied' && (
           <p className="text-sm">

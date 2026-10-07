@@ -1,13 +1,18 @@
 import { supabase } from './backend'
 
-let keyRequest: Promise<string | null> | null = null
+/** Settings the server says it's missing (shown in Settings > Notifications). */
+export let pushMissing: string[] = []
+
 /** The server hands out the push public key (it's safe to share), so no build-time setting is needed. */
-function publicKey(): Promise<string | null> {
-  keyRequest ??= fetch('/api/notify?publicKey=1')
-    .then((r) => r.json())
-    .then((j) => j.publicKey ?? null)
-    .catch(() => null)
-  return keyRequest
+async function publicKey(): Promise<string | null> {
+  try {
+    const j = await (await fetch('/api/notify?publicKey=1', { cache: 'no-store' })).json()
+    pushMissing = j.missing ?? []
+    return j.publicKey ?? null
+  } catch {
+    pushMissing = []
+    return null
+  }
 }
 
 export type PushState = 'unsupported' | 'not_configured' | 'denied' | 'off' | 'on'

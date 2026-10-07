@@ -262,7 +262,7 @@ function FinderSettings({ settings, save }: { settings: Settings; save: (s: Sett
           </p>
         ) : (
           <p>
-            <b>Using sample results.</b> {status.reason}. Add your Google key in Vercel to search real El Paso businesses (see the setup
+            <b>Using sample results.</b> {status.reason?.replace(/\.$/, '')}. Add your Google key in Vercel to search real El Paso businesses (see the setup
             steps in the README).
           </p>
         )}
